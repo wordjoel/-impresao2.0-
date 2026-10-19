@@ -1,4 +1,5 @@
 import type { TextFit } from '../model/objects';
+import { bestHyphenation } from './hyphenate-pt';
 import type { MeasureFont, TextMeasurer } from './metrics';
 
 /** Altura de linha como fração do tamanho da fonte. */
@@ -7,26 +8,47 @@ export const LINE_HEIGHT = 1.15;
 /**
  * Quebra de linha por largura medida. Respeita "\n" explícito; quebra em espaços; palavra maior
  * que a largura é quebrada por caractere (um SKU longo não pode sumir da etiqueta).
+ *
+ * Com `hyphenate` (2026-10-19, opcional por objeto): antes de mandar a palavra inteira para a
+ * próxima linha, tenta encaixar um pedaço dela com hífen numa sílaba do português
+ * (`hyphenate-pt.ts`). Sem ponto seguro, cai no comportamento acima.
  */
-export function wrapText(text: string, maxWidth: number, font: MeasureFont, m: TextMeasurer): string[] {
+export function wrapText(text: string, maxWidth: number, font: MeasureFont, m: TextMeasurer, hyphenate = false): string[] {
   const lines: string[] = [];
   for (const paragraph of text.split('\n')) {
     const words = paragraph.split(/ +/).filter((w, _i, arr) => w !== '' || arr.length === 1);
     let current = '';
     for (const word of words) {
-      const candidate = current === '' ? word : `${current} ${word}`;
-      if (m.width(candidate, font) <= maxWidth) {
-        current = candidate;
-        continue;
-      }
-      if (current !== '') lines.push(current);
-      // Palavra sozinha não cabe: corta por caractere.
-      current = '';
-      for (const ch of word) {
-        if (current !== '' && m.width(current + ch, font) > maxWidth) {
+      let rest = word;
+      for (;;) {
+        const candidate = current === '' ? rest : `${current} ${rest}`;
+        if (m.width(candidate, font) <= maxWidth) {
+          current = candidate;
+          break;
+        }
+        if (hyphenate) {
+          const head = current === '' ? '' : `${current} `;
+          const cut = bestHyphenation(rest, (piece) => m.width(head + piece, font) <= maxWidth);
+          if (cut > 0) {
+            lines.push(`${head}${rest.slice(0, cut)}-`);
+            current = '';
+            rest = rest.slice(cut);
+            continue;
+          }
+        }
+        if (current !== '') {
           lines.push(current);
-          current = ch;
-        } else current += ch;
+          current = '';
+          continue;
+        }
+        // Palavra sozinha não cabe: corta por caractere.
+        for (const ch of rest) {
+          if (current !== '' && m.width(current + ch, font) > maxWidth) {
+            lines.push(current);
+            current = ch;
+          } else current += ch;
+        }
+        break;
       }
     }
     lines.push(current);
@@ -57,11 +79,13 @@ export interface FitInput {
   font: MeasureFont;
   fit: TextFit;
   minSizeMm: number;
+  /** Hifenização em português nas quebras (só com WRAP/WRAP_SHRINK). */
+  hyphenate?: boolean;
 }
 
 function layoutAt(input: FitInput, sizeMm: number, wrap: boolean, m: TextMeasurer) {
   const font = { ...input.font, sizeMm };
-  const lines = wrap ? wrapText(input.text, input.widthMm, font, m) : input.text.split('\n');
+  const lines = wrap ? wrapText(input.text, input.widthMm, font, m, input.hyphenate === true) : input.text.split('\n');
   const lineHeightMm = sizeMm * LINE_HEIGHT;
   const fitsH = lines.length * lineHeightMm <= input.heightMm + 1e-9 || (lines.length === 1 && sizeMm <= input.heightMm + 1e-9);
   const fitsW = lines.every((l) => m.width(l, font) <= input.widthMm + 1e-9);

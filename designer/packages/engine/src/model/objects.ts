@@ -55,6 +55,11 @@ export interface TextObject extends BaseLabelObject {
   fit: TextFit;
   /** Piso do auto-fit. */
   minSizeMm: number;
+  /**
+   * Hifenização em português nas quebras de linha. Opcional e desligada por padrão: templates
+   * salvos antes de 2026-10-19 não têm o campo e quebram exatamente como antes.
+   */
+  hyphenate?: boolean;
   /** Fonte vem do kit de marca (null = usa `font.family` do próprio objeto). */
   brandFont: BrandFontRole | null;
   color: string;

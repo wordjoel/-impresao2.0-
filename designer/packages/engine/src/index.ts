@@ -19,6 +19,7 @@ export * from './barcode/checksum';
 export * from './barcode/encode';
 export * from './layout/metrics';
 export * from './layout/text-layout';
+export * from './layout/hyphenate-pt';
 export * from './render/mono';
 export * from './render/resolve';
 export * from './templates/versioning';

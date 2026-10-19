@@ -218,7 +218,7 @@ export function resolveLabel(
         const style = resolveStyle(obj, brand);
         const font = { family: style.family!, sizeMm: obj.font.sizeMm, bold: style.bold!, italic: obj.font.italic };
         const fit = fitText(
-          { text, widthMm: obj.width, heightMm: obj.height, font, fit: obj.fit, minSizeMm: obj.minSizeMm },
+          { text, widthMm: obj.width, heightMm: obj.height, font, fit: obj.fit, minSizeMm: obj.minSizeMm, hyphenate: obj.hyphenate === true },
           measurer,
         );
         if (fit.overflow) {

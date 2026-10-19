@@ -215,6 +215,12 @@ function TextProps({ obj, set }: { obj: TextObject; set: Setter }) {
       <div className="row">
         <Check label="Negrito" checked={obj.font.bold} onChange={(bold) => font({ bold })} />
         <Check label="Itálico" checked={obj.font.italic} onChange={(italic) => font({ italic })} />
+        <Check
+          label="Hifenizar"
+          checked={obj.hyphenate === true}
+          onChange={(hyphenate) => set({ hyphenate })}
+          title="Quebra palavras em sílabas do português (ex.: PRO-MOÇÃO). Só vale com quebra de linha; não separa vogais nem códigos."
+        />
       </div>
       <div className="grid2">
         <Select
