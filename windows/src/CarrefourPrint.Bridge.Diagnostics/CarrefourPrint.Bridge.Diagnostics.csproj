@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>CarrefourPrint.Bridge.Diagnostics</RootNamespace>
+    <AssemblyName>CarrefourPrintBridgeDiagnostics</AssemblyName>
+    <!-- Ferramenta de linha de comando companheira do Worker Service — mesma configuração e
+         mesma identidade de dispositivo (%ProgramData%), para diagnosticar o comportamento real
+         do coletor Windows já configurado, não um cenário sintético à parte. -->
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CarrefourPrint.Bridge.Domain\CarrefourPrint.Bridge.Domain.csproj" />
+    <ProjectReference Include="..\CarrefourPrint.Bridge.Infrastructure\CarrefourPrint.Bridge.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="10.0.12" />
+  </ItemGroup>
+
+</Project>

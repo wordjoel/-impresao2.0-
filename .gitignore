@@ -1,0 +1,39 @@
+# --- Android (android/) ---
+*.iml
+.gradle/
+local.properties
+.idea/
+.DS_Store
+build/
+captures/
+.externalNativeBuild
+.cxx
+android/app/schemas/
+*.apk
+*.aab
+*.log
+
+# Keystore de assinatura release: NUNCA versionar. Perder este arquivo/senha significa não poder
+# mais publicar atualizações sob a mesma identidade de app. Backup fica fora do git.
+android/keystore/*.jks
+android/keystore/*.keystore
+android/keystore/keystore.properties
+
+# Pacotes de entrega/homologação gerados pelos scripts (não são código-fonte)
+Atos-Print-Bridge-Entrega/
+Entrega-Fase1-*/
+android/tools/homologacao/recebidos/
+android/tools/homologacao/token-lab.txt
+
+# --- .NET (windows/, backend-reference/) ---
+bin/
+obj/
+*.user
+.vs/
+TestResults/
+
+# --- Node (designer/) ---
+node_modules/
+dist/
+*.tsbuildinfo
+.vite/

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Marca genérica in-app (placeholder até o cliente fornecer o logotipo oficial licenciado).
+     É o `logoResource` de todos os perfis em BrandPresets; trocar por cliente = apontar para
+     outro drawable, sem tocar em nenhuma tela. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M14,8h20v8h-20z"
+        android:strokeColor="#1B2A4A"
+        android:strokeWidth="1.5" />
+    <path
+        android:fillColor="#1B2A4A"
+        android:pathData="M8,16h32v16h-32z" />
+    <path
+        android:fillColor="#4FD1C5"
+        android:pathData="M12,20h24v3h-24z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M14,28h20v12h-20z"
+        android:strokeColor="#1B2A4A"
+        android:strokeWidth="1.5" />
+    <path
+        android:fillColor="#1B2A4A"
+        android:pathData="M17,32h14v2h-14z" />
+    <path
+        android:fillColor="#1B2A4A"
+        android:pathData="M17,36h9v2h-9z" />
+</vector>

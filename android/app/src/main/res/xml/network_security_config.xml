@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Proíbe HTTP em texto claro para toda comunicação com a nuvem (ON X/Carrefour Print Cloud) —
+  CARREFOUR-PRINT-TRAFFIC-MAP.md, Trecho A. Explícito e auditável em vez de depender do default
+  implícito do Android (que já é "sem cleartext" para targetSdk >= 28, mas um default silencioso
+  que muda de comportamento se minSdk/targetSdk forem ajustados no futuro não é a mesma coisa que
+  uma política declarada).
+
+  IMPORTANTE — isto NÃO cobre o Trecho B (Bridge -> impressora TSC via TCP raw, porta 9100):
+  essa política só se aplica à pilha HTTP(S) padrão do Android (HttpURLConnection/OkHttp/WebView).
+  A conexão com a impressora usa java.net.Socket diretamente (TcpPrinterTransport), fora dessa
+  pilha, e portanto fora do alcance deste arquivo — documentado explicitamente em
+  CARREFOUR-PRINT-TRAFFIC-MAP.md, não escondido aqui atrás de uma falsa sensação de cobertura.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false" />
+</network-security-config>

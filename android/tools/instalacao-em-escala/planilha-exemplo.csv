@@ -1,0 +1,4 @@
+serial,store_code,store_name,printer_name,printer_ip,printer_port,language,model,dpi,paper,is_default
+*,0001,Loja Padrao,Expedicao,192.168.70.50,9100,ZPL,TSC_ML241,203,100x72,true
+CF550A4LAWBB340,4521,Loja Centro,Expedicao,10.1.2.50,9100,ZPL,TSC_ML241,203,100x72,true
+CF550A4LAWBB340,4521,Loja Centro,Balanca,10.1.2.51,9100,TSPL,TSC_MB241,300,60x40,false

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="mc_language_entries">
+        <item>ZPL</item>
+        <item>TSPL</item>
+    </string-array>
+    <string-array name="mc_model_entries">
+        <item>TSC ML241</item>
+        <item>TSC MB241</item>
+        <item>Outra TSC</item>
+        <item>Genérica ZPL</item>
+    </string-array>
+    <string-array name="mc_model_values">
+        <item>TSC_ML241</item>
+        <item>TSC_MB241</item>
+        <item>OTHER_TSC</item>
+        <item>GENERIC_ZPL</item>
+    </string-array>
+    <string-array name="mc_dpi_entries">
+        <item>203</item>
+        <item>300</item>
+    </string-array>
+</resources>

@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Managed Configurations (Android Enterprise) do A.print.Bridge — instalação em escala.
+  O console do MDM/EMM (Intune, Workspace ONE, SOTI, MDM Bluebird...) lê este esquema e mostra os
+  campos para o administrador preencher por grupo de coletores (ex.: um grupo por loja).
+  O app aplica sozinho ao abrir e sempre que o MDM muda a configuração
+  (ProvisioningCoordinator). As chaves são as mesmas do provisioning.json da bancada.
+  Nunca há licença, token ou chave aqui.
+-->
+<restrictions xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <restriction
+        android:key="store_code"
+        android:restrictionType="string"
+        android:title="@string/mc_store_code"
+        android:description="@string/mc_store_code_desc" />
+
+    <restriction
+        android:key="store_name"
+        android:restrictionType="string"
+        android:title="@string/mc_store_name" />
+
+    <restriction
+        android:key="printers"
+        android:restrictionType="bundle_array"
+        android:title="@string/mc_printers"
+        android:description="@string/mc_printers_desc">
+        <restriction
+            android:key="printer"
+            android:restrictionType="bundle"
+            android:title="@string/mc_printer">
+            <restriction android:key="name" android:restrictionType="string" android:title="@string/mc_printer_name" />
+            <restriction android:key="ip" android:restrictionType="string" android:title="@string/mc_printer_ip" />
+            <restriction android:key="port" android:restrictionType="integer" android:title="@string/mc_printer_port" android:defaultValue="9100" />
+            <restriction
+                android:key="language"
+                android:restrictionType="choice"
+                android:title="@string/mc_printer_language"
+                android:entries="@array/mc_language_entries"
+                android:entryValues="@array/mc_language_entries"
+                android:defaultValue="ZPL" />
+            <restriction
+                android:key="model"
+                android:restrictionType="choice"
+                android:title="@string/mc_printer_model"
+                android:entries="@array/mc_model_entries"
+                android:entryValues="@array/mc_model_values"
+                android:defaultValue="TSC_ML241" />
+            <restriction
+                android:key="dpi"
+                android:restrictionType="choice"
+                android:title="@string/mc_printer_dpi"
+                android:entries="@array/mc_dpi_entries"
+                android:entryValues="@array/mc_dpi_entries"
+                android:defaultValue="203" />
+            <restriction android:key="paper" android:restrictionType="string" android:title="@string/mc_printer_paper" android:defaultValue="100x72" />
+            <restriction android:key="is_default" android:restrictionType="bool" android:title="@string/mc_printer_default" android:defaultValue="false" />
+        </restriction>
+    </restriction>
+
+    <restriction
+        android:key="replace_printers"
+        android:restrictionType="bool"
+        android:title="@string/mc_replace_printers"
+        android:description="@string/mc_replace_printers_desc"
+        android:defaultValue="false" />
+
+    <restriction android:key="max_attempts" android:restrictionType="integer" android:title="@string/mc_max_attempts" android:defaultValue="5" />
+    <restriction android:key="retry_base_ms" android:restrictionType="integer" android:title="@string/mc_retry_base_ms" android:defaultValue="2000" />
+    <restriction android:key="history_retention_days" android:restrictionType="integer" android:title="@string/mc_history_days" android:defaultValue="30" />
+    <!-- hidden exige defaultValue; vazio = não mexe no PIN atual. -->
+    <restriction android:key="admin_pin" android:restrictionType="hidden" android:title="@string/mc_admin_pin" android:defaultValue="" />
+</restrictions>

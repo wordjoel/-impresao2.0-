@@ -1,0 +1,15 @@
+{
+  "name": "athos-label",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev -w @athos-label/web --",
+    "build": "npm run build -w @athos-label/web",
+    "print-server": "npm run start -w @athos-label/print-server",
+    "test": "npm run test --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present"
+  }
+}

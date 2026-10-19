@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application>
+        <!--
+          SÓ NO BUILD DEBUG (src/debug): provisionamento de licença de laboratório por ADB, sem
+          digitar token no coletor. android.permission.DUMP é concedida ao shell do ADB e nunca a
+          apps comuns — ou seja, só quem tem o aparelho no cabo USB com depuração consegue chamar.
+          Não existe no APK de release. Uso: tools/homologacao/ativar-licenca-lab.ps1.
+
+          É uma Activity (e não um BroadcastReceiver) porque no Android 11 do Bluebird CF550 o
+          sistema pulava o receiver de manifesto de forma intermitente ("Skipped (manifest)" no
+          histórico de broadcasts, sem motivo registrado). Abrir Activity não passa por essa fila.
+        -->
+        <activity
+            android:name=".debug.LabProvisioningActivity"
+            android:exported="true"
+            android:permission="android.permission.DUMP"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+    </application>
+</manifest>

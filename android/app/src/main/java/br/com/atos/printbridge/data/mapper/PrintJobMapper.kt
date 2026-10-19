@@ -1,0 +1,68 @@
+package br.com.atos.printbridge.data.mapper
+
+import br.com.atos.printbridge.data.local.entity.PrintJobEntity
+import br.com.atos.printbridge.domain.model.PrintJob
+import br.com.atos.printbridge.domain.model.PrintJobStatus
+import br.com.atos.printbridge.domain.model.PrintPayloadType
+
+fun PrintJobEntity.toDomain(): PrintJob = PrintJob(
+    id = id,
+    printerId = printerId,
+    type = runCatching { PrintPayloadType.valueOf(type) }.getOrDefault(PrintPayloadType.ZPL),
+    payload = payload,
+    documentName = documentName,
+    copies = copies,
+    status = runCatching { PrintJobStatus.valueOf(status) }.getOrDefault(PrintJobStatus.PENDING),
+    attempts = attempts,
+    maxAttempts = maxAttempts,
+    errorMessage = errorMessage,
+    externalDocumentId = externalDocumentId,
+    originalJobId = originalJobId,
+    createdAt = createdAt,
+    startedAt = startedAt,
+    sentAt = sentAt,
+    updatedAt = updatedAt,
+    validationWarnings = validationWarnings?.split("\n")?.filter { it.isNotBlank() } ?: emptyList(),
+    groupId = groupId,
+    pageIndex = pageIndex,
+    pageCount = pageCount,
+    printerName = printerName,
+    printerAddress = printerAddress,
+    printerProtocol = printerProtocol,
+    storeId = storeId,
+    collectorId = collectorId,
+    deviceId = deviceId,
+    sourceApp = sourceApp,
+    operatorName = operatorName,
+)
+
+fun PrintJob.toEntity(): PrintJobEntity = PrintJobEntity(
+    id = id,
+    printerId = printerId,
+    type = type.name,
+    payload = payload,
+    documentName = documentName,
+    copies = copies,
+    status = status.name,
+    attempts = attempts,
+    maxAttempts = maxAttempts,
+    errorMessage = errorMessage,
+    externalDocumentId = externalDocumentId,
+    originalJobId = originalJobId,
+    createdAt = createdAt,
+    startedAt = startedAt,
+    sentAt = sentAt,
+    updatedAt = updatedAt,
+    validationWarnings = validationWarnings.takeIf { it.isNotEmpty() }?.joinToString("\n"),
+    groupId = groupId,
+    pageIndex = pageIndex,
+    pageCount = pageCount,
+    printerName = printerName,
+    printerAddress = printerAddress,
+    printerProtocol = printerProtocol,
+    storeId = storeId,
+    collectorId = collectorId,
+    deviceId = deviceId,
+    sourceApp = sourceApp,
+    operatorName = operatorName,
+)

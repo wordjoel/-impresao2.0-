@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Splash da janela (antes do primeiro frame do Compose): só o fundo, SEM logo de cliente. A
+     abertura do app mostra apenas o nome do APK (IntroScreen); a logo do cliente aparece só na tela
+     de módulos (Home). Cobre API 24-30 aqui e API 31+ via values-v31/themes.xml. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@color/splash_background" />
+</layer-list>

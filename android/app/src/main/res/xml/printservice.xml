@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Fase 2: metadados do serviço de impressão do sistema (AthosPrintService). "Configurações" no
+  diálogo de impressão abre o app, onde as impressoras são cadastradas.
+-->
+<print-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:settingsActivity="br.com.atos.printbridge.MainActivity" />

@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/CarrefourPrint.Bridge.Diagnostics/CarrefourPrint.Bridge.Diagnostics.csproj" />
+    <Project Path="src/CarrefourPrint.Bridge.Domain/CarrefourPrint.Bridge.Domain.csproj" />
+    <Project Path="src/CarrefourPrint.Bridge.Infrastructure/CarrefourPrint.Bridge.Infrastructure.csproj" />
+    <Project Path="src/CarrefourPrint.Bridge.Worker/CarrefourPrint.Bridge.Worker.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/CarrefourPrint.Bridge.Domain.Tests/CarrefourPrint.Bridge.Domain.Tests.csproj" />
+    <Project Path="tests/CarrefourPrint.Bridge.Infrastructure.Tests/CarrefourPrint.Bridge.Infrastructure.Tests.csproj" />
+  </Folder>
+</Solution>

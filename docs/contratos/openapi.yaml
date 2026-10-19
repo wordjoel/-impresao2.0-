@@ -1,0 +1,1604 @@
+openapi: 3.0.3
+info:
+  title: Carrefour Print Cloud API
+  version: "1.0.0"
+  license:
+    name: Proprietary
+  description: >
+    Contrato HTTP entre Android Bridge / Windows Bridge e o backend de licenciamento
+    (CARREFOUR-PRINT-CROSS-PLATFORM.md). Especificação executável — nenhum servidor real
+    a implementa ainda (regra "não provisionar cloud paga"); serve para gerar stubs de
+    cliente e/ou mock server local (ex.: Prism) sem depender de infraestrutura real.
+servers:
+  - url: https://api.example.invalid/v1
+    description: Placeholder — nenhum domínio real registrado ainda.
+
+paths:
+  /activation:
+    post:
+      operationId: activateDevice
+      summary: >
+        Ativa um dispositivo contra uma licença, consumindo um seat se disponível — via
+        `activationCode` (fluxo manual) ou `pairingCode` (provisionamento em escala,
+        CARREFOUR-PRINT-PROVISIONING.md §3), exatamente um dos dois.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ActivationRequest"
+      responses:
+        "200":
+          description: Ativação bem-sucedida (ou repetição idempotente de uma ativação recente).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActivationResponse"
+        "404":
+          description: Código de ativação inexistente.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                errorCode: LICENSE_ACTIVATION_CODE_INVALID
+                message: "Código de ativação não encontrado"
+        "409":
+          description: Limite de seats da licença já atingido, OU pairingCode já atingiu maxUses (CARREFOUR-PRINT-PROVISIONING.md §5, passo 5).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                seatsExhausted:
+                  value:
+                    errorCode: LICENSE_SEATS_EXHAUSTED
+                    message: "Limite de dispositivos desta licença já atingido"
+                    extra:
+                      maxDevices: 5
+                      activeDevices: 5
+                pairingCodeExhausted:
+                  value:
+                    errorCode: PAIRING_CODE_EXHAUSTED
+                    message: "Este código de pareamento já atingiu o número máximo de usos"
+        "410":
+          description: Código de ativação expirado, OU pairingCode expirado (CARREFOUR-PRINT-PROVISIONING.md §5, passo 4).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                activationCodeExpired:
+                  value:
+                    errorCode: LICENSE_ACTIVATION_CODE_EXPIRED
+                    message: "Código de ativação expirado"
+                pairingCodeExpired:
+                  value:
+                    errorCode: PAIRING_CODE_EXPIRED
+                    message: "Código de pareamento expirado"
+        "403":
+          description: >
+            License existe mas está em um estado que não aceita novas ativações
+            (SUSPENDED/EXPIRED/REVOKED — ver CARREFOUR-PRINT-SERVER-LICENSING.md §3-§4, passo 3 do checklist),
+            OU o pairingCode existe mas está REVOKED (mesma resposta para "não existe"/"revogado" —
+            CARREFOUR-PRINT-PROVISIONING.md §5, passo 3, nunca confirmar qual dos dois é o caso).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                licenseNotActivatable:
+                  value:
+                    errorCode: LICENSE_NOT_ACTIVATABLE
+                    message: "Licença não está em estado que permita ativação"
+                    extra:
+                      licenseStatus: SUSPENDED
+                pairingCodeRevoked:
+                  value:
+                    errorCode: PAIRING_CODE_REVOKED
+                    message: "Código de pareamento inválido"
+        "400":
+          description: Nem `activationCode` nem `pairingCode` informado, ou `pairingCode` em formato inválido — CARREFOUR-PRINT-PROVISIONING.md §5, passo 1.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                errorCode: PAIRING_CODE_MALFORMED
+                message: "Informe exatamente um de activationCode ou pairingCode"
+        "401":
+          description: O pairingCode não corresponde a nenhum código conhecido — CARREFOUR-PRINT-PROVISIONING.md §5, passo 2.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                errorCode: PAIRING_CODE_INVALID
+                message: "Código de pareamento inválido"
+        "429":
+          description: Rate limit de tentativas de ativação por pairingCode excedido — CARREFOUR-PRINT-PROVISIONING.md §5, passo 7.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                errorCode: RATE_LIMITED
+                message: "Muitas tentativas de ativação — aguarde e tente novamente"
+
+  /devices/{deviceId}/heartbeat/challenge:
+    post:
+      operationId: requestHeartbeatChallenge
+      summary: Solicita um nonce de uso único para a prova de posse contínua.
+      security:
+        - deviceTokenAuth: []
+      parameters:
+        - name: deviceId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Nonce emitido.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HeartbeatChallenge"
+        "401":
+          description: deviceToken desconhecido ou expirado.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                errorCode: AUTH_INVALID_TOKEN
+                message: "Token de dispositivo inválido ou expirado"
+
+  /devices/{deviceId}/heartbeat/verify:
+    post:
+      operationId: verifyHeartbeat
+      summary: Verifica a assinatura do nonce e renova (ou revoga) a validade local da licença.
+      security:
+        - deviceTokenAuth: []
+      parameters:
+        - name: deviceId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HeartbeatVerification"
+      responses:
+        "200":
+          description: Heartbeat aceito.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HeartbeatResult"
+        "401":
+          description: Assinatura não confere com a chave pública registrada do device.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                errorCode: LICENSE_SIGNATURE_INVALID
+                message: "Assinatura inválida para o nonce informado"
+        "403":
+          description: Device foi revogado.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                errorCode: LICENSE_REVOKED
+                message: "Dispositivo revogado"
+
+  /devices/{deviceId}:
+    get:
+      operationId: getDevice
+      summary: Consulta um Device (CARREFOUR-PRINT-DEVICE-IDENTITY.md §2.1).
+      security:
+        - userAuth: []
+      parameters:
+        - name: deviceId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Device encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Device"
+        "404":
+          description: Device não encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: revokeDevice
+      summary: >
+        Revoga um Device (CARREFOUR-PRINT-DEVICE-IDENTITY.md §2.5) — ação administrativa, nunca
+        automática. Usada nos fluxos de troca de aparelho e recuperação/reinstalação
+        (CARREFOUR-PRINT-DEVICE-IDENTITY.md §4.2/§4.3) para liberar o seat de um Device antigo.
+      security:
+        - userAuth: []
+      parameters:
+        - name: deviceId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeviceRevocationRequest"
+      responses:
+        "200":
+          description: Device revogado; seat liberado na License associada.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeviceRevocation"
+        "403":
+          description: >
+            Ator autenticado no PRÓPRIO tenant do Device, mas sem role suficiente
+            (TENANT_ADMIN/SUPPORT/SUPER_ADMIN — AUTHORIZATION.md §4). Nunca usado para "Device de
+            outro tenant" — ver 404 abaixo e CARREFOUR-PRINT-TENANT-ISOLATION.md §3.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: >
+            Device não encontrado NESTE tenant — inclui tanto "não existe" quanto "existe, mas
+            pertence a outro tenant" (mesma resposta para os dois casos, de propósito: 403
+            confirmaria a um ator não autorizado que o recurso existe em algum lugar; 404 não
+            revela nada — CARREFOUR-PRINT-TENANT-ISOLATION.md §3).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /devices/{deviceId}/queue/assigned:
+    get:
+      operationId: listAssignedQueueJobs
+      summary: >
+        Lista PrintJobs em status ASSIGNED endereçados a este device, ainda não confirmados como
+        entregues à fila local (CARREFOUR-PRINT-CLOUD-QUEUE-ORCHESTRATION.md §3, passo 1) — nunca
+        retorna jobs QUEUED (ainda sem device decidido) nem DELIVERED_TO_DEVICE (já confirmados).
+        Chamada tipicamente dentro do mesmo ciclo de heartbeat (CARREFOUR-PRINT-CROSS-PLATFORM.md
+        §9) — pull-based, o device decide quando perguntar, nunca a Cloud Queue empurra.
+      security:
+        - deviceTokenAuth: []
+      parameters:
+        - name: deviceId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Lista de PrintJobs ASSIGNED (pode ser vazia — não é erro).
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PrintJob"
+        "401":
+          description: deviceToken inválido/expirado.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Device revogado.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                errorCode: LICENSE_REVOKED
+                message: "Dispositivo revogado"
+
+  /devices/{deviceId}/queue/ack:
+    post:
+      operationId: acknowledgeQueueJobDelivery
+      summary: >
+        Confirma que os PrintJobs listados JÁ FORAM persistidos com sucesso na fila local do
+        device (CARREFOUR-PRINT-CLOUD-QUEUE-ORCHESTRATION.md §3, passo 3) — chamada SOMENTE DEPOIS
+        do commit local confirmado, nunca antes, e nunca como precondição para o device começar a
+        processar o job (a fila local processa independentemente deste ack ter sucesso ou não).
+        Idempotente: reenviar o ack de um `cloudJobId` já marcado DELIVERED_TO_DEVICE é um no-op,
+        nunca um erro — necessário porque o device pode legitimamente reenviar este ack depois de
+        uma falha de rede na tentativa anterior (mesmo `cloudJobId`, mesmo efeito).
+      security:
+        - deviceTokenAuth: []
+      parameters:
+        - name: deviceId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QueueAckRequest"
+      responses:
+        "200":
+          description: >
+            Ids reconhecidos (inclui tanto os recém-marcados quanto os já marcados antes, por
+            idempotência). Um `cloudJobId` desconhecido para este device é silenciosamente omitido
+            do array de resposta, nunca um erro 4xx — evita que uma corrida entre sync e uma
+            reatribuição administrativa concorrente derrube a chamada inteira.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QueueAckResponse"
+        "401":
+          description: deviceToken inválido/expirado.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /devices/{deviceId}/queue/status:
+    post:
+      operationId: reportQueueJobStatus
+      summary: >
+        Reporta o status terminal (ou de progresso) de um ou mais PrintJobs já entregues à fila
+        local, best-effort — CARREFOUR-PRINT-CLOUD-QUEUE-ORCHESTRATION.md §3, passo 5. Nunca
+        bloqueia nem atrasa o processamento local (§5.3); ausência de report (dispositivo offline)
+        nunca é tratada como erro pela Cloud Queue, só como status desatualizado até o próximo
+        report bem-sucedido.
+      security:
+        - deviceTokenAuth: []
+      parameters:
+        - name: deviceId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QueueStatusReportRequest"
+      responses:
+        "200":
+          description: Status registrado; Cloud Queue passa a espelhar este valor para consultas externas (GET /print-jobs).
+        "401":
+          description: deviceToken inválido/expirado.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /tenants/{tenantId}/api-keys:
+    post:
+      operationId: createApiKey
+      summary: Cria uma API Key para integração externa (CARREFOUR-PRINT-API-KEYS.md §2).
+      security:
+        - userAuth: []
+      parameters:
+        - name: tenantId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiKeyCreateRequest"
+      responses:
+        "200":
+          description: >
+            Chave criada. O campo `secret` só aparece nesta resposta — nunca recuperável depois
+            (CARREFOUR-PRINT-API-KEYS.md §6, mesma regra da rotação).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiKeyCreated"
+        "403":
+          description: Ator sem role suficiente (TENANT_ADMIN/SUPER_ADMIN).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    get:
+      operationId: listApiKeys
+      summary: Lista as API Keys do tenant — nunca inclui o secret nem o hash, só `keyPrefix`.
+      security:
+        - userAuth: []
+      parameters:
+        - name: tenantId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Lista de chaves (metadados apenas).
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ApiKey"
+
+  /tenants/{tenantId}/api-keys/{keyId}/rotate:
+    post:
+      operationId: rotateApiKey
+      summary: >
+        Rotaciona uma API Key (CARREFOUR-PRINT-API-KEYS.md §6) — cria uma chave nova, marca a
+        antiga como ROTATED com uma janela de graça em que ambas autenticam.
+      security:
+        - userAuth: []
+      parameters:
+        - name: tenantId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: keyId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Nova chave criada; `secret` aparece só aqui, uma única vez.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiKeyCreated"
+        "404":
+          description: Chave não encontrada.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /tenants/{tenantId}/api-keys/{keyId}:
+    delete:
+      operationId: revokeApiKey
+      summary: >
+        Revoga uma API Key imediatamente, sem janela de graça (CARREFOUR-PRINT-API-KEYS.md §7) —
+        diferente da rotação, propositalmente.
+      security:
+        - userAuth: []
+      parameters:
+        - name: tenantId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: keyId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Chave revogada.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiKey"
+        "404":
+          description: Chave não encontrada.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /tenants/{tenantId}/provisioning-profiles:
+    post:
+      operationId: createProvisioningProfile
+      summary: Cria um perfil de provisionamento (config + impressoras pré-cadastradas) para um lote de dispositivos — CARREFOUR-PRINT-PROVISIONING.md §1.
+      security:
+        - userAuth: []
+      parameters:
+        - name: tenantId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProvisioningProfileCreateRequest"
+      responses:
+        "201":
+          description: Perfil criado.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProvisioningProfile"
+        "403":
+          description: Ator sem role suficiente (TENANT_ADMIN/SUPER_ADMIN).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    get:
+      operationId: listProvisioningProfiles
+      summary: Lista os perfis de provisionamento do tenant.
+      security:
+        - userAuth: []
+      parameters:
+        - name: tenantId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Lista de perfis (inclui ARCHIVED só se solicitado explicitamente — fora de escopo aqui, comportamento padrão filtra).
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProvisioningProfile"
+
+  /tenants/{tenantId}/pairing-codes:
+    post:
+      operationId: createPairingCode
+      summary: >
+        Cria um código de pareamento temporário e de uso limitado para um lote de ativações —
+        CARREFOUR-PRINT-PROVISIONING.md §2. O secret completo só aparece nesta resposta, uma única
+        vez (mesma regra de ApiKey, CARREFOUR-PRINT-API-KEYS.md §6, passo 3).
+      security:
+        - userAuth: []
+      parameters:
+        - name: tenantId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PairingCodeCreateRequest"
+      responses:
+        "201":
+          description: Código criado — `code` em texto claro, nunca mais recuperável depois.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PairingCodeCreated"
+        "403":
+          description: Ator sem role suficiente (TENANT_ADMIN/SUPER_ADMIN).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    get:
+      operationId: listPairingCodes
+      summary: Lista os códigos de pareamento do tenant — nunca inclui o secret nem o hash, só `keyPrefix` e metadados de uso.
+      security:
+        - userAuth: []
+      parameters:
+        - name: tenantId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Lista de códigos (metadados apenas).
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PairingCodeSummary"
+
+  /pairing-codes/{code}:
+    delete:
+      operationId: revokePairingCode
+      summary: >
+        Revoga um código de pareamento imediatamente, sem janela de graça — sempre definitivo,
+        nunca uma "troca" gradual como a rotação de ApiKey (CARREFOUR-PRINT-PROVISIONING.md §6).
+      security:
+        - userAuth: []
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: string
+          description: O `keyPrefix` do código (identificação), nunca o secret completo — nunca reaparece após a criação.
+      responses:
+        "200":
+          description: Código revogado.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PairingCodeSummary"
+        "404":
+          description: Código não encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /print-jobs:
+    post:
+      operationId: createPrintJobExternal
+      summary: >
+        Cria um PrintJob via integração externa — exige o escopo `print.jobs.create`
+        (CARREFOUR-PRINT-API-KEYS.md §4). Equivalente externo de EnqueuePrintJobUseCase.
+      security:
+        - apiKeyAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+          description: >
+            Gerado pelo Sistema Externo (recomendado: UUID v4), único por tentativa lógica de
+            criação — CARREFOUR-PRINT-CLOUD-QUEUE-ORCHESTRATION.md §9.1. Repetir a mesma chave
+            (retry por timeout na resposta anterior, o cenário mais comum de duplicidade deste
+            endpoint) NUNCA cria um segundo PrintJob — retorna 200 com o job já existente em vez de
+            201. Escopo da chave: por tenant (a mesma chave usada por dois tenants diferentes, ex.
+            via API Keys distintas, nunca colide). Sem expiração definida nesta versão — pendência
+            registrada em CARREFOUR-PRINT-CLOUD-QUEUE-ORCHESTRATION.md §10.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PrintJobCreateRequest"
+      responses:
+        "201":
+          description: PrintJob criado agora (primeira vez que esta Idempotency-Key foi vista para este tenant), estado inicial QUEUED.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PrintJob"
+        "200":
+          description: >
+            Idempotency-Key já usada por uma chamada anterior (bem-sucedida) deste tenant — devolve
+            o MESMO PrintJob já criado, nunca um segundo. Corpo da requisição não é revalidado
+            contra o da tentativa original nesta versão (simplificação aceita — divergência de
+            corpo sob a mesma chave é tratada como erro do integrador, não detectada pelo servidor).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PrintJob"
+        "400":
+          description: Header `Idempotency-Key` ausente.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Chave sem o escopo `print.jobs.create`, revogada, ou expirada (estado da própria chave — CARREFOUR-PRINT-API-KEYS.md §8).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: >
+            `printerId` informado não existe PARA O TENANT desta chave — inclui tanto "não existe
+            em lugar nenhum" quanto "existe, mas pertence a outro tenant" (mesma resposta para os
+            dois casos, nunca 403 aqui — CARREFOUR-PRINT-TENANT-ISOLATION.md §3).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "429":
+          description: Rate limit da chave excedido (CARREFOUR-PRINT-API-KEYS.md §9).
+          headers:
+            X-RateLimit-Limit: { schema: { type: integer } }
+            X-RateLimit-Remaining: { schema: { type: integer } }
+            X-RateLimit-Reset: { schema: { type: integer, format: int64 } }
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                errorCode: RATE_LIMITED
+                message: "Limite de requisições excedido para esta chave"
+                extra:
+                  limit: 300
+                  remaining: 0
+    get:
+      operationId: listPrintJobsExternal
+      summary: Consulta PrintJobs do tenant via integração externa — exige o escopo `print.jobs.read`.
+      security:
+        - apiKeyAuth: []
+      responses:
+        "200":
+          description: Lista de PrintJobs do tenant da chave.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PrintJob"
+        "403":
+          description: Chave sem o escopo `print.jobs.read`.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /printers:
+    get:
+      operationId: listPrintersExternal
+      summary: Consulta impressoras cadastradas do tenant via integração externa — exige o escopo `printers.read`.
+      security:
+        - apiKeyAuth: []
+      responses:
+        "200":
+          description: Lista de impressoras do tenant da chave.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PrinterSummary"
+        "403":
+          description: Chave sem o escopo `printers.read`.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+components:
+  securitySchemes:
+    deviceTokenAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: >
+        JWT (ES256) emitido em /activation e renovado em /heartbeat/verify — ver
+        CARREFOUR-PRINT-TOKEN-DESIGN.md §2 para o schema completo de claims (sub=deviceId,
+        aud="carrefour-print-device-api", tenant_id, license_id, scope, exp curto ~15min).
+        Renovar exige prova de posse nova via challenge-response — nunca basta reapresentar
+        um deviceToken (mesmo válido) para obter outro. `aud` fixo e distinto do de userAuth
+        é o que impede este token de ser aceito em rotas de usuário, mesmo com assinatura válida.
+    userAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: >
+        ID token do Firebase Auth de uma pessoa (AUTHORIZATION.md §1-§2) — identidade
+        completamente separada do deviceToken (`aud` diferente — CARREFOUR-PRINT-TOKEN-DESIGN.md §0/§4).
+        Nunca aceito nas rotas de device (/devices/{id}/heartbeat/*); nunca o deviceToken é aceito aqui.
+    apiKeyAuth:
+      type: http
+      scheme: ApiKey
+      description: >
+        "Authorization: ApiKey cpk_{live|test}_<secret>" — CARREFOUR-PRINT-API-KEYS.md. Esquema
+        de header deliberadamente distinto de "Bearer" (usado por userAuth/deviceTokenAuth) para
+        que a rejeição por tipo errado de credencial aconteça antes mesmo de decodificar o valor
+        (CARREFOUR-PRINT-TOKEN-DESIGN.md §4, matriz de rejeição). Nunca embutida no Android/Windows
+        Bridge — exclusiva de integrações servidor-a-servidor de terceiros.
+  schemas:
+    DeviceIdentity:
+      type: object
+      required: [deviceId, platform, publicKey, keyAlgorithm, appVersion, createdAt]
+      properties:
+        deviceId:
+          type: string
+          pattern: "^[0-9a-f]{64}$"
+          description: SHA-256 (hex) da publicKey — nunca escolhido pelo cliente.
+        platform:
+          type: string
+          enum: [ANDROID, WINDOWS]
+        publicKey:
+          type: string
+          format: byte
+          description: Base64 de X.509 SubjectPublicKeyInfo (DER), curva P-256.
+        keyAlgorithm:
+          type: string
+          enum: [EC_P256]
+        appVersion:
+          type: string
+          example: "1.0.0"
+        createdAt:
+          type: integer
+          format: int64
+          description: Epoch millis UTC.
+
+    ActivationRequest:
+      type: object
+      description: >
+        Exatamente um de `activationCode`/`pairingCode` deve ser informado (nunca os dois, nunca
+        nenhum) — CARREFOUR-PRINT-PROVISIONING.md §3. `activationCode` é o fluxo manual original
+        (um humano digita o código da licença); `pairingCode` é o fluxo de provisionamento em
+        escala (device escaneia um QR contendo um código temporário e de uso limitado, nunca um
+        segredo de vida longa). Os dois resolvem para o mesmo checklist de SERVER VALIDATION
+        (CARREFOUR-PRINT-SERVER-LICENSING.md §4) contra a mesma License — a diferença é só como o
+        backend descobre qual License/ProvisioningProfile usar.
+      required: [device]
+      properties:
+        activationCode:
+          type: string
+          nullable: true
+        pairingCode:
+          type: string
+          nullable: true
+          description: Formato "pc_{env}_{secret}" — CARREFOUR-PRINT-PROVISIONING.md §2. Nunca o mesmo valor que activationCode; nunca de vida longa (sempre expiresAt + maxUses).
+        device:
+          $ref: "#/components/schemas/DeviceIdentity"
+
+    LicenseSummary:
+      type: object
+      description: >
+        Resumo em texto claro para exibição/log — NUNCA a fonte de verdade que o cliente usa para
+        decidir se opera. Essa decisão usa exclusivamente o `licenseToken` verificado (assinatura
+        ECDSA), ver CARREFOUR-PRINT-SERVER-LICENSING.md §5.
+      required: [licenseId, plan, maxDevices, status]
+      properties:
+        licenseId:
+          type: string
+        plan:
+          type: string
+        maxDevices:
+          type: integer
+        status:
+          type: string
+          enum: [PENDING, ACTIVE, SUSPENDED, EXPIRED, REVOKED]
+        expiresAt:
+          type: integer
+          format: int64
+          nullable: true
+
+    ActivationResponse:
+      type: object
+      required: [deviceToken, licenseToken, tenantId, licenseId, issuedAt, license]
+      properties:
+        deviceToken:
+          type: string
+          description: >
+            JWT (ES256) — ver DeviceTokenClaims para o conteúdo decodificado e
+            CARREFOUR-PRINT-TOKEN-DESIGN.md §2 para o desenho completo. Bearer para chamadas
+            subsequentes dentro do seu `scope`/`exp` curto; renovação exige challenge-response
+            novo, nunca só reapresentar este valor.
+        licenseToken:
+          type: string
+          description: >
+            Token compacto "payloadBase64Url.assinaturaBase64Url" (CARREFOUR-PRINT-SERVER-LICENSING.md §5).
+            É o único dado que o cliente persiste como fonte de verdade de licenciamento —
+            verificado localmente a cada decisão via a chave pública do servidor embutida no app,
+            nunca confiado sem essa verificação.
+        tenantId:
+          type: string
+        licenseId:
+          type: string
+        issuedAt:
+          type: integer
+          format: int64
+        license:
+          $ref: "#/components/schemas/LicenseSummary"
+        provisioningProfile:
+          $ref: "#/components/schemas/ProvisioningProfileApplied"
+
+    HeartbeatChallenge:
+      type: object
+      required: [nonce, expiresAt]
+      properties:
+        nonce:
+          type: string
+          format: byte
+          description: 32 bytes aleatórios do servidor, Base64. Uso único, expira em poucos minutos.
+        expiresAt:
+          type: integer
+          format: int64
+
+    HeartbeatVerification:
+      type: object
+      required: [nonce, signature]
+      properties:
+        nonce:
+          type: string
+          format: byte
+        signature:
+          type: string
+          format: byte
+          description: Assinatura ASN.1 DER (SHA256withECDSA) sobre SHA-256(nonce), Base64. Ver vetor de teste em CARREFOUR-PRINT-CROSS-PLATFORM.md §15.2.
+
+    HeartbeatResult:
+      type: object
+      required: [deviceToken, licenseToken, validUntil, license]
+      properties:
+        deviceToken:
+          type: string
+          description: >
+            DeviceToken renovado (JWT, novo `exp` curto) — substitui integralmente o anterior no
+            cliente. Só emitido porque a assinatura do challenge foi verificada com sucesso nesta
+            mesma chamada; nunca uma renovação "de graça" (CARREFOUR-PRINT-TOKEN-DESIGN.md §2.5).
+        licenseToken:
+          type: string
+          description: >
+            Token renovado a cada heartbeat bem-sucedido — substitui integralmente o token
+            anterior no cliente (StoreLicenseTokenUseCase). O `validUntil` embutido no payload
+            deste token é o que o servidor decide a cada emissão, não uma constante do cliente.
+        validUntil:
+          type: integer
+          format: int64
+          description: Cópia em texto claro do validUntil do token, só para exibição/log — a decisão operacional usa o valor dentro do licenseToken verificado.
+        license:
+          $ref: "#/components/schemas/LicenseSummary"
+
+    Device:
+      type: object
+      description: CARREFOUR-PRINT-DEVICE-IDENTITY.md §2.1 — o "slot" de negócio licenciado.
+      required: [id, tenantId, platform, status, registeredAt]
+      properties:
+        id:
+          type: string
+        tenantId:
+          type: string
+        licenseId:
+          type: string
+          nullable: true
+          description: Nulo até a primeira DeviceActivation bem-sucedida.
+        platform:
+          type: string
+          enum: [ANDROID, WINDOWS]
+        label:
+          type: string
+          nullable: true
+          description: Nome amigável definido pelo operador — nunca usado como identidade.
+        status:
+          type: string
+          enum: [REGISTERED, ACTIVE, REVOKED]
+        registeredAt:
+          type: integer
+          format: int64
+        activatedAt:
+          type: integer
+          format: int64
+          nullable: true
+        revokedAt:
+          type: integer
+          format: int64
+          nullable: true
+        lastSeenAt:
+          type: integer
+          format: int64
+          nullable: true
+        provisioningProfileId:
+          type: string
+          nullable: true
+          description: Preenchido quando o device foi ativado via pairingCode (CARREFOUR-PRINT-PROVISIONING.md §3) — nulo para ativação manual por activationCode.
+
+    DeviceCredential:
+      type: object
+      description: CARREFOUR-PRINT-DEVICE-IDENTITY.md §2.2 — material criptográfico, separado de Device de propósito.
+      required: [id, deviceId, publicKey, keyAlgorithm, storageBackend, status, createdAt]
+      properties:
+        id:
+          type: string
+        deviceId:
+          type: string
+        publicKey:
+          type: string
+          format: byte
+        keyAlgorithm:
+          type: string
+          enum: [EC_P256]
+        storageBackend:
+          type: string
+          description: Auto-declarado pelo cliente, não atestado criptograficamente (ver §2.2 do documento).
+          enum: [ANDROID_KEYSTORE, WINDOWS_CNG_TPM, WINDOWS_CNG_SOFTWARE]
+        status:
+          type: string
+          enum: [ACTIVE, SUPERSEDED, REVOKED]
+        createdAt:
+          type: integer
+          format: int64
+        supersededAt:
+          type: integer
+          format: int64
+          nullable: true
+
+    DeviceRegistration:
+      type: object
+      description: CARREFOUR-PRINT-DEVICE-IDENTITY.md §2.3 — registro técnico de "esta credencial se apresentou", gravado mesmo se a ativação subsequente falhar.
+      required: [id, deviceId, credentialId, platform, appVersion, requestedAt]
+      properties:
+        id:
+          type: string
+        deviceId:
+          type: string
+        credentialId:
+          type: string
+        platform:
+          type: string
+          enum: [ANDROID, WINDOWS]
+        appVersion:
+          type: string
+        requestedAt:
+          type: integer
+          format: int64
+        sourceIp:
+          type: string
+          nullable: true
+
+    DeviceActivation:
+      type: object
+      description: CARREFOUR-PRINT-DEVICE-IDENTITY.md §2.4 — a decisão de licenciamento, gravada mesmo em caso de rejeição.
+      required: [id, deviceId, registrationId, licenseId, result, seatConsumed, decidedAt]
+      properties:
+        id:
+          type: string
+        deviceId:
+          type: string
+        registrationId:
+          type: string
+        licenseId:
+          type: string
+        result:
+          type: string
+          enum: [ACTIVATED, REJECTED_SEATS_EXHAUSTED, REJECTED_INVALID_CODE, REJECTED_EXPIRED_CODE]
+        seatConsumed:
+          type: boolean
+        decidedAt:
+          type: integer
+          format: int64
+
+    DeviceRevocationRequest:
+      type: object
+      required: [reason]
+      properties:
+        reason:
+          type: string
+          enum: [ADMIN_ACTION, LICENSE_CANCELLED, DEVICE_LOST_OR_STOLEN, DEVICE_REPLACED, SECURITY_INCIDENT, REINSTALL_RECONCILIATION]
+        notes:
+          type: string
+          nullable: true
+
+    DeviceRevocation:
+      type: object
+      description: CARREFOUR-PRINT-DEVICE-IDENTITY.md §2.5.
+      required: [id, deviceId, revokedAt, reason]
+      properties:
+        id:
+          type: string
+        deviceId:
+          type: string
+        revokedAt:
+          type: integer
+          format: int64
+        revokedByUserId:
+          type: string
+          nullable: true
+          description: Nulo se a revogação foi automática — cancelamento de licença em cascata, por exemplo.
+        reason:
+          type: string
+          enum: [ADMIN_ACTION, LICENSE_CANCELLED, DEVICE_LOST_OR_STOLEN, DEVICE_REPLACED, SECURITY_INCIDENT, REINSTALL_RECONCILIATION]
+        notes:
+          type: string
+          nullable: true
+
+    DeviceTokenClaims:
+      type: object
+      description: >
+        Forma DECODIFICADA de um deviceToken (JWT ES256) — CARREFOUR-PRINT-TOKEN-DESIGN.md §2.
+        Documentada aqui só como referência para quem implementa o backend/middleware; o token em
+        si trafega como JWT compacto padrão (header.payload.assinatura), nunca este objeto direto
+        em nenhum response.
+      required: [iss, sub, aud, iat, exp, jti, tenant_id, license_id, scope]
+      properties:
+        iss:
+          type: string
+          description: Identificador do backend de licenciamento emissor.
+        sub:
+          type: string
+          description: deviceId — o "sujeito" do token.
+        aud:
+          type: string
+          enum: [carrefour-print-device-api]
+          description: Fixo — nunca compartilhado com o aud de userAuth (JWT de pessoa). É o que impede a mistura de identidades no middleware.
+        iat:
+          type: integer
+          description: NumericDate (segundos desde epoch, padrão JWT/RFC 7519) — única exceção à convenção de epoch millis do resto do sistema.
+        exp:
+          type: integer
+          description: NumericDate — curto por design (proposta 900s), para que uma revogação de Device se torne efetiva sem precisar de blacklist de tokens (CARREFOUR-PRINT-TOKEN-DESIGN.md §2.6).
+        jti:
+          type: string
+          description: Id único do token, para correlação em log/auditoria.
+        tenant_id:
+          type: string
+        license_id:
+          type: string
+        scope:
+          type: string
+          description: Escopos fixos separados por espaço (convenção OAuth2) — ex. "device:heartbeat device:queue:sync device:printjob:report". Nunca inclui escopo de escrita administrativa.
+
+    ApiKey:
+      type: object
+      description: CARREFOUR-PRINT-API-KEYS.md §2 — nunca carrega o secret nem o hash, só metadados.
+      required: [id, tenantId, label, keyPrefix, scopes, status, createdAt, createdByUserId, rateLimitPerMinute]
+      properties:
+        id:
+          type: string
+        tenantId:
+          type: string
+        label:
+          type: string
+        keyPrefix:
+          type: string
+          description: 'Ex.: "cpk_live_7pQ3z1" — só o suficiente para identificação visual, nunca o secret completo.'
+        scopes:
+          type: array
+          items:
+            type: string
+            enum: [print.jobs.create, print.jobs.read, printers.read, documents.write, devices.read]
+        status:
+          type: string
+          enum: [ACTIVE, ROTATED, REVOKED]
+        createdAt:
+          type: integer
+          format: int64
+        createdByUserId:
+          type: string
+        expiresAt:
+          type: integer
+          format: int64
+          nullable: true
+        rotationGraceEndsAt:
+          type: integer
+          format: int64
+          nullable: true
+        rotatedToKeyId:
+          type: string
+          nullable: true
+        lastUsedAt:
+          type: integer
+          format: int64
+          nullable: true
+        rateLimitPerMinute:
+          type: integer
+
+    ApiKeyCreateRequest:
+      type: object
+      required: [label, scopes]
+      properties:
+        label:
+          type: string
+        scopes:
+          type: array
+          items:
+            type: string
+            enum: [print.jobs.create, print.jobs.read, printers.read, documents.write, devices.read]
+        expiresAt:
+          type: integer
+          format: int64
+          nullable: true
+        rateLimitPerMinute:
+          type: integer
+          nullable: true
+          description: Se omitido, usa o default do plano do tenant.
+
+    ApiKeyCreated:
+      type: object
+      description: >
+        Única resposta que carrega o secret em texto puro — CARREFOUR-PRINT-API-KEYS.md §6.
+        Não recuperável em nenhuma chamada subsequente.
+      required: [apiKey, secret]
+      properties:
+        apiKey:
+          $ref: "#/components/schemas/ApiKey"
+        secret:
+          type: string
+          description: 'O valor completo "cpk_{env}_<secret>" — exiba/copie agora, nunca mais disponível.'
+
+    PrintJobCreateRequest:
+      type: object
+      description: Equivalente externo dos parâmetros de EnqueuePrintJobUseCase (CARREFOUR-PRINT-CROSS-PLATFORM.md §6).
+      required: [type, payload, documentName]
+      properties:
+        printerId:
+          type: string
+          nullable: true
+        type:
+          type: string
+          enum: [ZPL, PDF, RAW]
+        payload:
+          type: string
+          description: Conteúdo bruto (ZPL como texto) — máx. 512 KB em UTF-8, mesmo limite do cliente.
+        documentName:
+          type: string
+        copies:
+          type: integer
+          default: 1
+        externalDocumentId:
+          type: string
+          nullable: true
+
+    PrintJob:
+      type: object
+      description: Forma de fio de CARREFOUR-PRINT-CROSS-PLATFORM.md §6 — mesmos campos do modelo já implementado nos dois clientes.
+      required: [id, printerId, type, documentName, copies, status, attempts, maxAttempts, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+        printerId:
+          type: string
+        type:
+          type: string
+          enum: [ZPL, PDF, RAW]
+        documentName:
+          type: string
+        copies:
+          type: integer
+        status:
+          type: string
+          enum: [QUEUED, ASSIGNED, DELIVERED_TO_DEVICE, PENDING, PROCESSING, SENT, FAILED, CANCELLED]
+          description: >
+            QUEUED/ASSIGNED/DELIVERED_TO_DEVICE são estados exclusivos da Cloud Queue, anteriores a
+            qualquer device ter tocado no job (CARREFOUR-PRINT-CLOUD-QUEUE-ORCHESTRATION.md §2.1) —
+            nunca aparecem no `JobStatus` local do dispositivo. A partir de PENDING, este campo é um
+            espelho best-effort do que o device reportou (§3, passo 5), nunca a fonte de verdade.
+            SENT nunca significa impresso fisicamente — CARREFOUR-PRINT-CROSS-PLATFORM.md §7.
+        assignedDeviceId:
+          type: string
+          nullable: true
+          description: Preenchido a partir de ASSIGNED — o device escolhido pela Cloud Queue para receber este job (CARREFOUR-PRINT-CLOUD-QUEUE-ORCHESTRATION.md §1).
+        attempts:
+          type: integer
+        maxAttempts:
+          type: integer
+        errorMessage:
+          type: string
+          nullable: true
+        externalDocumentId:
+          type: string
+          nullable: true
+        createdAt:
+          type: integer
+          format: int64
+        updatedAt:
+          type: integer
+          format: int64
+
+    QueueAckRequest:
+      type: object
+      description: CARREFOUR-PRINT-CLOUD-QUEUE-ORCHESTRATION.md §3, passo 3 — enviado só depois do commit local confirmado.
+      required: [cloudJobIds]
+      properties:
+        cloudJobIds:
+          type: array
+          minItems: 1
+          items:
+            type: string
+          description: Os `id` de PrintJob (Cloud Queue) já persistidos com sucesso na fila local — viram `cloudJobId` no modelo local (CARREFOUR-PRINT-CLOUD-QUEUE-ORCHESTRATION.md §2.3).
+
+    QueueAckResponse:
+      type: object
+      required: [acknowledged]
+      properties:
+        acknowledged:
+          type: array
+          items:
+            type: string
+          description: Subconjunto de cloudJobIds efetivamente reconhecido (marcado DELIVERED_TO_DEVICE) — pode ser menor que o array enviado se algum id já não pertencer mais a este device (nunca um erro, ver summary da rota).
+
+    QueueStatusReportRequest:
+      type: object
+      description: CARREFOUR-PRINT-CLOUD-QUEUE-ORCHESTRATION.md §3, passo 5 — best-effort, batched, nunca bloqueante para a fila local.
+      required: [reports]
+      properties:
+        reports:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required: [cloudJobId, status]
+            properties:
+              cloudJobId:
+                type: string
+              status:
+                type: string
+                enum: [PENDING, PROCESSING, SENT, FAILED, CANCELLED]
+                description: Mesmo vocabulário do JobStatus local (CARREFOUR-PRINT-CROSS-PLATFORM.md §7) — nunca QUEUED/ASSIGNED/DELIVERED_TO_DEVICE, que são estados exclusivos da Cloud Queue anteriores a este ponto.
+              errorMessage:
+                type: string
+                nullable: true
+
+    PrinterSummary:
+      type: object
+      description: Subconjunto de Printer (CARREFOUR-PRINT-CROSS-PLATFORM.md §5) seguro para expor a integrações externas — sem detalhes de configuração interna.
+      required: [id, name, model, enabled]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        model:
+          type: string
+        enabled:
+          type: boolean
+
+    Configuration:
+      type: object
+      description: >
+        Forma de fio de CARREFOUR-PRINT-CROSS-PLATFORM.md §11 — nunca inclui `adminPinHash` (é
+        local, nunca sincronizado; um perfil de provisionamento nunca define/redefine o PIN
+        administrativo de um device, isso continua sendo configurado localmente por quem instala).
+      properties:
+        maxAttempts:
+          type: integer
+          default: 3
+        connectTimeoutMillis:
+          type: integer
+          default: 5000
+        socketTimeoutMillis:
+          type: integer
+          default: 8000
+        retryBaseIntervalMillis:
+          type: integer
+          format: int64
+          default: 5000
+        autoRetryTransientFailures:
+          type: boolean
+          default: true
+        historyRetentionDays:
+          type: integer
+          default: 30
+
+    ProvisioningPrinter:
+      type: object
+      description: >
+        Diferente de PrinterSummary (que omite ipAddress/port de propósito para integrações
+        externas) — aqui o device PRECISA desses campos para se autoconfigurar sem digitação
+        manual, CARREFOUR-PRINT-PROVISIONING.md §1.
+      required: [id, name, ipAddress, port, model, language]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        ipAddress:
+          type: string
+        port:
+          type: integer
+        model:
+          type: string
+        language:
+          type: string
+          enum: [ZPL, TSPL]
+
+    ProvisioningPolicies:
+      type: object
+      description: CARREFOUR-PRINT-PROVISIONING.md §1 — nunca lido pelo cliente para calcular expiração; só orienta o que o backend assina a cada heartbeat (CARREFOUR-PRINT-SERVER-LICENSING.md §10.1).
+      properties:
+        offlineGraceTier:
+          type: string
+          nullable: true
+          enum: [STANDARD, EXTENDED]
+
+    ProvisioningProfileCreateRequest:
+      type: object
+      required: [label, configuration]
+      properties:
+        label:
+          type: string
+        location:
+          type: string
+          nullable: true
+        configuration:
+          $ref: "#/components/schemas/Configuration"
+        allowedPrinters:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProvisioningPrinter"
+        policies:
+          $ref: "#/components/schemas/ProvisioningPolicies"
+
+    ProvisioningProfile:
+      type: object
+      description: CARREFOUR-PRINT-PROVISIONING.md §1.
+      required: [id, tenantId, label, configuration, status, createdAt, updatedAt, createdByUserId]
+      properties:
+        id:
+          type: string
+        tenantId:
+          type: string
+        label:
+          type: string
+        location:
+          type: string
+          nullable: true
+        configuration:
+          $ref: "#/components/schemas/Configuration"
+        allowedPrinters:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProvisioningPrinter"
+        policies:
+          $ref: "#/components/schemas/ProvisioningPolicies"
+        status:
+          type: string
+          enum: [ACTIVE, ARCHIVED]
+        createdAt:
+          type: integer
+          format: int64
+        updatedAt:
+          type: integer
+          format: int64
+        createdByUserId:
+          type: string
+
+    ProvisioningProfileApplied:
+      type: object
+      description: >
+        Subconjunto de ProvisioningProfile devolvido em ActivationResponse.provisioningProfile —
+        só presente quando a ativação usou pairingCode (CARREFOUR-PRINT-PROVISIONING.md §3), ausente
+        numa ativação por activationCode tradicional. Carrega só o que o device precisa APLICAR
+        localmente (configuration/allowedPrinters), nunca id/metadados administrativos do perfil
+        (CARREFOUR-PRINT-PROVISIONING.md §7).
+      required: [configuration]
+      properties:
+        configuration:
+          $ref: "#/components/schemas/Configuration"
+        allowedPrinters:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProvisioningPrinter"
+
+    PairingCodeCreateRequest:
+      type: object
+      required: [provisioningProfileId, licenseId, expiresAt, maxUses]
+      properties:
+        provisioningProfileId:
+          type: string
+        licenseId:
+          type: string
+        expiresAt:
+          type: integer
+          format: int64
+          description: Obrigatório — CARREFOUR-PRINT-PROVISIONING.md §2 ("um código de pareamento sem expiração contradiz 'temporário' por definição").
+        maxUses:
+          type: integer
+          description: Tipicamente o tamanho do lote de hardware esperado; nunca "ilimitado".
+
+    PairingCodeCreated:
+      type: object
+      required: [code, keyPrefix, tenantId, provisioningProfileId, licenseId, expiresAt, maxUses, status, createdAt, createdByUserId]
+      properties:
+        code:
+          type: string
+          description: 'O valor completo "pc_{env}_<secret>" — exiba/copie/gere o QR agora, nunca mais disponível.'
+        keyPrefix:
+          type: string
+        tenantId:
+          type: string
+        provisioningProfileId:
+          type: string
+        licenseId:
+          type: string
+        expiresAt:
+          type: integer
+          format: int64
+        maxUses:
+          type: integer
+        status:
+          type: string
+          enum: [ACTIVE, EXPIRED, EXHAUSTED, REVOKED]
+        createdAt:
+          type: integer
+          format: int64
+        createdByUserId:
+          type: string
+
+    PairingCodeSummary:
+      type: object
+      description: Nunca inclui o secret nem o hash — só `keyPrefix` e metadados de uso, mesma disciplina de ApiKey (CARREFOUR-PRINT-API-KEYS.md §2).
+      required: [keyPrefix, tenantId, provisioningProfileId, licenseId, expiresAt, maxUses, usedCount, status, createdAt, createdByUserId]
+      properties:
+        keyPrefix:
+          type: string
+        tenantId:
+          type: string
+        provisioningProfileId:
+          type: string
+        licenseId:
+          type: string
+        expiresAt:
+          type: integer
+          format: int64
+        maxUses:
+          type: integer
+        usedCount:
+          type: integer
+        status:
+          type: string
+          enum: [ACTIVE, EXPIRED, EXHAUSTED, REVOKED]
+        createdAt:
+          type: integer
+          format: int64
+        createdByUserId:
+          type: string
+
+    LicenseTokenPayload:
+      type: object
+      description: >
+        Forma DECODIFICADA do conteúdo de um licenseToken (CARREFOUR-PRINT-SERVER-LICENSING.md §5)
+        — documentada aqui só como referência para quem implementa o backend. O token em si
+        trafega como string opaca ("payloadBase64Url.assinaturaBase64Url"); este schema NUNCA
+        aparece diretamente em nenhum response — ele é o que existe DEPOIS de decodificar e
+        verificar a assinatura do campo `licenseToken` de ActivationResponse/HeartbeatResult.
+      required: [deviceId, licenseId, tenantId, status, issuedAt, validUntil, maxOfflineMillis]
+      properties:
+        deviceId:
+          type: string
+        licenseId:
+          type: string
+        tenantId:
+          type: string
+        status:
+          type: string
+          enum: [PENDING, ACTIVE, SUSPENDED, EXPIRED, REVOKED]
+        issuedAt:
+          type: integer
+          format: int64
+        validUntil:
+          type: integer
+          format: int64
+          description: Decidido pelo servidor a cada emissão — nunca uma constante do cliente.
+        maxOfflineMillis:
+          type: integer
+          format: int64
+
+    ErrorResponse:
+      type: object
+      required: [errorCode, message]
+      properties:
+        errorCode:
+          type: string
+          description: >
+            String estável — nunca renumerada/reaproveitada. Clientes devem tratar um
+            errorCode desconhecido como erro genérico (fail-safe), nunca travar.
+          enum:
+            - LICENSE_ACTIVATION_CODE_INVALID
+            - LICENSE_ACTIVATION_CODE_EXPIRED
+            - LICENSE_NOT_ACTIVATABLE
+            - LICENSE_SEATS_EXHAUSTED
+            - LICENSE_REVOKED
+            - LICENSE_SIGNATURE_INVALID
+            - AUTH_INVALID_TOKEN
+            - RATE_LIMITED
+            - INTERNAL_ERROR
+            - PAIRING_CODE_MALFORMED
+            - PAIRING_CODE_INVALID
+            - PAIRING_CODE_REVOKED
+            - PAIRING_CODE_EXPIRED
+            - PAIRING_CODE_EXHAUSTED
+        message:
+          type: string
+        extra:
+          type: object
+          additionalProperties: true
+          nullable: true

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Permissão signature do Print Bridge: só concedida se este APK tiver a mesma assinatura. -->
+    <uses-permission android:name="br.com.atos.printbridge.permission.SUBMIT_PRINT_JOB" />
+
+    <!-- Android 11+: sem isto o pacote do Print Bridge fica invisível e o bind falha. -->
+    <queries>
+        <package android:name="br.com.atos.printbridge" />
+        <package android:name="br.com.atos.printbridge.debug" />
+    </queries>
+
+    <application
+        android:allowBackup="false"
+        android:label="@string/app_name"
+        android:icon="@android:drawable/ic_menu_send"
+        android:theme="@android:style/Theme.Material.Light.DarkActionBar">
+        <activity
+            android:name=".MainActivity"
+            android:launchMode="singleTop"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|keyboard|smallestScreenSize|uiMode"
+            android:exported="true"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>

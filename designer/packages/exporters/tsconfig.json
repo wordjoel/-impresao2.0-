@@ -1,0 +1,8 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    // Mesma regra do engine: só APIs que existem num Web Worker (exportação em lote roda lá).
+    "lib": ["ES2022", "WebWorker"]
+  },
+  "include": ["src", "test"]
+}

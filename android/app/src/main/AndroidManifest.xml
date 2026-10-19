@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- Android 13+: notificação de "enviado"/"falha" de cada impressão (Fase 1, Etapa 7). -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Descoberta de impressoras via mDNS/NSD (Fase 5): permite adquirir o MulticastLock -->
+    <!-- durante a busca para que anúncios mDNS da impressora cheguem ao aparelho. -->
+    <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
+    <!-- Descoberta de impressoras (AndroidNsdPrinterDiscovery): estado do Wi-Fi durante a busca. -->
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <!--
+      Fase D / D2 (14/10/2026): o agente MDM embutido saiu deste app. Gerenciamento, telemetria,
+      posição e matrícula são do agente oficial com.onmdm.agent (dono do aparelho); a licença
+      chega pela configuração gerenciada (license_token). Por isso não há mais câmera, posição,
+      serviço em primeiro plano nem administrador de dispositivo aqui.
+    -->
+
+    <permission
+        android:name="br.com.atos.printbridge.permission.SUBMIT_PRINT_JOB"
+        android:protectionLevel="signature" />
+
+    <application
+        android:name=".PrintBridgeApp"
+        android:allowBackup="false"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:networkSecurityConfig="@xml/network_security_config"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.AtosPrintBridge">
+
+        <!-- Instalação em escala: esquema de Managed Configurations lido pelo console do MDM/EMM. -->
+        <meta-data
+            android:name="android.content.APP_RESTRICTIONS"
+            android:resource="@xml/app_restrictions" />
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTop"
+            android:theme="@style/Theme.AtosPrintBridge">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!--
+          Ponto de entrada de integração externa (Fase 7). Exportado propositalmente para que
+          outros apps Android possam solicitar impressão, mas protegido por permissão de nível
+          "signature" — só apps assinados com a mesma chave da ATHOS podem chamá-lo diretamente
+          via ação customizada. ACTION_SEND (compartilhamento padrão do Android) continua aberto,
+          pois é a via "documento -> compartilhar -> Print Bridge" prevista no Prompt 7.
+        -->
+        <activity
+            android:name=".integration.PrintBridgeReceiverActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar"
+            android:permission="br.com.atos.printbridge.permission.SUBMIT_PRINT_JOB">
+            <intent-filter>
+                <action android:name="br.com.atos.printbridge.action.SUBMIT_PRINT_JOB" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+        <!--
+          Recepção via "Compartilhar" do Android (Prompt 7 / FN-07). A via técnica adotada é
+          ACTION_SEND/ACTION_SEND_MULTIPLE (a Fase 2 somou o AthosPrintService, abaixo, para quem usa
+          "Imprimir"; o Compartilhar continua sendo a via que preserva texto/ZPL como veio):
+            - o destino real é uma impressora térmica TSC de etiquetas ZPL em TCP na rede local;
+            - o Print Framework rasteriza páginas (PDF/gráfico) para o serviço de impressão — não há
+              mapeamento para ZPL de etiqueta, e não existe "impressora Android" configurável aqui;
+            - ACTION_SEND preserva o conteúdo (texto/arquivo) e deixa o Print Bridge decidir.
+          */* é proposital: qualquer app que ofereça "Compartilhar" consegue direcionar texto ou
+          arquivo ao Print Bridge; a validação de tipo/segurança acontece na recepção
+          (PrintBridgeShareReceiverActivity), nunca no filtro.
+        -->
+        <!--
+          Ferramenta OCULTA de teste da API (ex-app "PB Cliente Teste"): sem intent-filter, sem ícone
+          no launcher. Abre pelos 7 toques na versão (Configurações — mesmo uid, sem checagem) ou por
+          ADB. exported=true só para o `adb shell am start` dos scripts de homologação; a permissão
+          DUMP é concedida ao shell e ao sistema, nunca a app de terceiro — nenhum app abre esta tela.
+        -->
+        <activity
+            android:name=".diagnostics.ApiTestToolActivity"
+            android:exported="true"
+            android:permission="android.permission.DUMP"
+            android:label="Teste da API"
+            android:launchMode="singleTop"
+            android:excludeFromRecents="true"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|keyboard|smallestScreenSize|uiMode"
+            android:windowSoftInputMode="adjustResize"
+            android:theme="@android:style/Theme.Material.Light.DarkActionBar" />
+
+        <activity
+            android:name=".integration.PrintBridgeShareReceiverActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar">
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="*/*" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEND_MULTIPLE" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="*/*" />
+            </intent-filter>
+        </activity>
+
+        <!--
+          API local da Fase 1 (IPrintBridgeService, AIDL): apps ATHOS no mesmo coletor imprimem
+          template, PDF, imagem ou ZPL/TSPL direto por socket, sem PDF externo/Acrobat/Print
+          Framework. Mesma permissão "signature" da integração por Intent: só apps assinados com a
+          chave ATHOS conseguem dar bind. Não exige nenhum privilégio de sistema (funciona sob MDM).
+        -->
+        <service
+            android:name=".service.PrintBridgeService"
+            android:exported="true"
+            android:permission="br.com.atos.printbridge.permission.SUBMIT_PRINT_JOB">
+            <intent-filter>
+                <action android:name="br.com.atos.printbridge.action.BIND_PRINT_BRIDGE" />
+            </intent-filter>
+        </service>
+
+        <!--
+          Fase 2: serviço de impressão do sistema. Qualquer app com "Imprimir" enxerga as impressoras
+          cadastradas aqui, depois que o serviço é ativado em Configurações > Impressão (ou pelo MDM).
+          BIND_PRINT_SERVICE garante que só o sistema (spooler) consegue dar bind. O PDF entra na
+          mesma fila/licença da API local (ver SystemPrintJobBridge).
+        -->
+        <service
+            android:name=".printservice.AthosPrintService"
+            android:exported="true"
+            android:label="@string/print_service_label"
+            android:permission="android.permission.BIND_PRINT_SERVICE">
+            <intent-filter>
+                <action android:name="android.printservice.PrintService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.printservice"
+                android:resource="@xml/printservice" />
+        </service>
+
+        <!--
+          exported=true é necessário para o sistema entregar o broadcast BOOT_COMPLETED.
+          Não usamos android:permission="...RECEIVE_BOOT_COMPLETED" aqui de propósito: essa é
+          uma permissão "normal" que qualquer app pode se auto-conceder no próprio manifesto sem
+          consentimento do usuário, então declará-la como filtro de quem pode nos chamar não
+          restringe nada de verdade (daria uma falsa sensação de proteção). O onReceive só reage
+          à action BOOT_COMPLETED e apenas reagenda o processamento da fila — uma chamada local
+          espúria não expõe dados nem executa nada sensível.
+        -->
+        <receiver
+            android:name=".worker.BootCompletedReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
+        <!-- WorkManager é inicializado manualmente via HiltWorkerFactory (ver PrintBridgeApp) -->
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="${applicationId}.androidx-startup"
+            android:exported="false"
+            tools:node="merge">
+            <meta-data
+                android:name="androidx.work.WorkManagerInitializer"
+                android:value="androidx.startup"
+                tools:node="remove" />
+        </provider>
+
+    </application>
+</manifest>
+

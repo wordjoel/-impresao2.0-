@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Tema único do app. A identidade visual (cores) é aplicada em runtime pelo Compose
+         (ui/brand/BrandTheme.kt) a partir da marca ativa; aqui só fica o que o sistema resolve
+         antes da primeira composição (fundo da janela/splash). -->
+    <style name="Theme.AtosPrintBridge" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@drawable/splash_background</item>
+    </style>
+</resources>

@@ -1,0 +1,9 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    // WebWorker e não DOM: o compilador garante que o engine só usa o que existe num Worker
+    // (sem document/window), então ele roda igual no navegador, no Worker e no Node.
+    "lib": ["ES2022", "WebWorker"]
+  },
+  "include": ["src", "test"]
+}

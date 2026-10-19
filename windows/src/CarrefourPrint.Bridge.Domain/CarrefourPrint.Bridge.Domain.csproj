@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>CarrefourPrint.Bridge.Domain</RootNamespace>
+    <!-- Zero dependência de Windows/API de plataforma — espelha o domain/ do Android (100% Kotlin
+         puro, sem android.*). Portável e testável em qualquer SO, mesmo mirando um produto Windows. -->
+  </PropertyGroup>
+
+</Project>

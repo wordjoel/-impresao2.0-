@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Rótulos exibidos no console do MDM/EMM (Managed Configurations) — ver xml/app_restrictions.xml. -->
+<resources>
+    <string name="mc_store_code">Código da loja</string>
+    <string name="mc_store_code_desc">Identificador da loja (ex.: 4521). Casa a loja já existente pelo código.</string>
+    <string name="mc_store_name">Nome da loja</string>
+    <string name="mc_printers">Impressoras</string>
+    <string name="mc_printers_desc">Impressoras térmicas da loja. Casadas por IP:porta: reaplicar atualiza, nunca duplica.</string>
+    <string name="mc_printer">Impressora</string>
+    <string name="mc_printer_name">Nome</string>
+    <string name="mc_printer_ip">Endereço IP</string>
+    <string name="mc_printer_port">Porta TCP</string>
+    <string name="mc_printer_language">Linguagem</string>
+    <string name="mc_printer_model">Modelo</string>
+    <string name="mc_printer_dpi">Resolução (DPI)</string>
+    <string name="mc_printer_paper">Papel padrão (LARGURAxALTURA mm)</string>
+    <string name="mc_printer_default">Impressora padrão</string>
+    <string name="mc_replace_printers">Remover impressoras fora desta lista</string>
+    <string name="mc_replace_printers_desc">Se ligado, o MDM é a fonte da verdade: impressoras da loja que não estiverem na lista são removidas do coletor.</string>
+    <string name="mc_max_attempts">Tentativas de envio por job</string>
+    <string name="mc_retry_base_ms">Espera base entre tentativas (ms)</string>
+    <string name="mc_history_days">Dias de histórico</string>
+    <string name="mc_admin_pin">PIN do administrador (4 a 8 dígitos)</string>
+</resources>

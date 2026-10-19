@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">A.print.Bridge</string>
+    <!-- Fase 2: nome do serviço em Configurações > Impressão e no diálogo "Imprimir" dos outros apps. -->
+    <string name="print_service_label">A.print.Bridge</string>
+    <!-- MDM Core: Administrador de Dispositivo corporativo para gestão do coletor. -->
+</resources>

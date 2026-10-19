@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk.Worker">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>CarrefourPrint.Bridge.Worker</RootNamespace>
+    <OutputType>Exe</OutputType>
+    <UserSecretsId>carrefour-print-bridge-windows</UserSecretsId>
+    <AssemblyVersion>0.1.0.0</AssemblyVersion>
+    <!-- Template oficial "Worker Service" da Microsoft (dotnet new worker) — a mesma base usada
+         para qualquer serviço de longa duração no Windows/.NET, equivalente arquitetural ao
+         CoroutineWorker+WorkManager do Android: um host genérico com hosted services em segundo
+         plano, aqui capaz de rodar tanto como console (dev) quanto como Windows Service instalado
+         (produção), no mesmo binário, sem duplicar lógica. -->
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CarrefourPrint.Bridge.Domain\CarrefourPrint.Bridge.Domain.csproj" />
+    <ProjectReference Include="..\CarrefourPrint.Bridge.Infrastructure\CarrefourPrint.Bridge.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.12" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="10.0.12" />
+    <PackageReference Include="Microsoft.Extensions.Logging.EventLog" Version="10.0.12" />
+  </ItemGroup>
+
+</Project>

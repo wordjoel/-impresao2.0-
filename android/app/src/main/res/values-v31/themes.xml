@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- API 31+: splash do sistema (sem dependência core-splashscreen). Só fundo, sem logo de cliente, como o
+         layer-list de values/themes.xml (a abertura mostra apenas o nome do APK). -->
+    <style name="Theme.AtosPrintBridge" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowSplashScreenBackground">@color/splash_background</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/ic_splash_logo</item>
+        <item name="android:windowBackground">@drawable/splash_background</item>
+    </style>
+</resources>

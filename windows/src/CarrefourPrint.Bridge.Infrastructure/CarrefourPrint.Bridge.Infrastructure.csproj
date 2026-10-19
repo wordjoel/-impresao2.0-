@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>CarrefourPrint.Bridge.Infrastructure</RootNamespace>
+    <!-- TFM -windows dá acesso pleno à API Win32 (CNG, EventLog) com anotação de plataforma
+         suportada pelo compilador (SupportedOSPlatform). Equivalente ao módulo Android que
+         depende de android.* — aqui é o módulo que depende de Windows-specific API. -->
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CarrefourPrint.Bridge.Domain\CarrefourPrint.Bridge.Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.12" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.12" />
+  </ItemGroup>
+
+</Project>

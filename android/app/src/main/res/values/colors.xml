@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Identidade do PRODUTO (A.print.Bridge): fundo branco + tinta naval #0C2D62 da arte oficial.
+         O rótulo e o ícone do launcher são resolvidos na instalação, não em runtime, então NÃO seguem
+         a marca do cliente; ver WHITE-LABEL-ARCHITECTURE.md (limitação documentada + caminho via
+         flavor/overlay). -->
+    <color name="ic_launcher_background">#FFFFFF</color>
+    <color name="splash_background">#FFFFFF</color>
+</resources>
