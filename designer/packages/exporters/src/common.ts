@@ -1,4 +1,4 @@
-import { boundsOf, mmToDots, type BBox, type Issue, type ResolvedText } from '@athos-label/engine';
+import { boundsOf, mmToDots, MonoBitmap, type BBox, type Issue, type ResolvedBarcode1D, type ResolvedText } from '@athos-label/engine';
 
 /** Rotação arredondada para o quarto de volta mais próximo (o que impressora térmica suporta). */
 export function quarterTurn(rotation: number): { q: 0 | 1 | 2 | 3; degrees: number; exact: boolean } {
@@ -61,6 +61,47 @@ export function layoutLines(el: ResolvedText): LineLayout[] {
     const baseline = top + (el.lineHeightMm - 0.925 * el.fontSizeMm) / 2 + 0.718 * el.fontSizeMm;
     return { text, top, baseline, anchorX, anchor };
   });
+}
+
+/**
+ * Código 1D desenhado como imagem (simbologias em `RASTER_1D`): barras com o módulo inteiro em
+ * dots já escolhido pelo resolver, giradas como o objeto, e o texto legível como um elemento de
+ * texto comum (cada linguagem imprime com a própria fonte, igual aos outros textos).
+ */
+export function raster1D(el: ResolvedBarcode1D, dpi: number): { barsAt: BBox; bars: MonoBitmap; text: ResolvedText | null } {
+  const { degrees } = quarterTurn(el.rotation);
+  const h = Math.max(1, dots(el.barHeightMm, dpi));
+  const flat = new MonoBitmap(el.moduleCount * el.moduleDots, h);
+  for (const [start, len] of runs(el.modules)) {
+    for (let x = start * el.moduleDots; x < (start + len) * el.moduleDots; x++) for (let y = 0; y < h; y++) flat.set(x, y, true);
+  }
+  const barsAt = localRectBounds(el, degrees, 0, 0, el.barsWidthMm, el.barHeightMm);
+  if (!el.humanReadable) return { barsAt, bars: flat.rotate(degrees), text: null };
+  const lineHeightMm = el.textSizeMm * 1.2;
+  const origin = toLabel(el.x, el.y, 0, el.barHeightMm, degrees);
+  const text: ResolvedText = {
+    kind: 'text',
+    id: el.id,
+    x: origin.x,
+    y: origin.y,
+    width: el.barsWidthMm,
+    height: lineHeightMm,
+    // Já arredondada para quarto de volta: o alerta de rotação sai uma vez só, no próprio código.
+    rotation: degrees,
+    dynamic: el.dynamic,
+    text: el.humanText,
+    lines: [el.humanText],
+    fontSizeMm: el.textSizeMm,
+    lineHeightMm,
+    family: 'Helvetica',
+    bold: false,
+    italic: false,
+    align: 'CENTER',
+    valign: 'TOP',
+    color: '#000000',
+    overflow: false,
+  };
+  return { barsAt, bars: flat.rotate(degrees), text };
 }
 
 /** Sequências contínuas de módulos escuros: [início, comprimento]. Menos retângulos no SVG/PDF. */

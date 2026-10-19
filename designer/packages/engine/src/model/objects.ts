@@ -66,7 +66,7 @@ export interface TextObject extends BaseLabelObject {
   useBrandColor: boolean;
 }
 
-export type Symbology1D = 'CODE128' | 'EAN13' | 'UPCA' | 'CODE39';
+export type Symbology1D = 'CODE128' | 'EAN13' | 'UPCA' | 'CODE39' | 'EAN8' | 'ITF14' | 'GS1_128';
 
 export interface Barcode1DObject extends BaseLabelObject {
   type: 'BARCODE_1D';

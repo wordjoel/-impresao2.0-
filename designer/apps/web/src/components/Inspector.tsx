@@ -254,6 +254,9 @@ function Barcode1DProps({ obj, set }: { obj: Barcode1DObject; set: Setter }) {
           ['EAN13', 'EAN-13'],
           ['UPCA', 'UPC-A'],
           ['CODE39', 'Code 39'],
+          ['EAN8', 'EAN-8'],
+          ['ITF14', 'ITF-14 (caixa, GTIN-14)'],
+          ['GS1_128', 'GS1-128 — (01)GTIN(17)validade(10)lote'],
         ]}
         onChange={(symbology) => set({ symbology })}
       />

@@ -1,5 +1,5 @@
-import { MonoBitmap, type ResolvedElement } from '@athos-label/engine';
-import { bytesToLatin1, dots, latin1Bytes, layoutLines, localRectBounds, quarterTurn, rotationIssue, toCp1252, toLabel } from './common';
+import { MonoBitmap, RASTER_1D, type ResolvedElement } from '@athos-label/engine';
+import { bytesToLatin1, dots, latin1Bytes, layoutLines, localRectBounds, quarterTurn, raster1D, rotationIssue, toCp1252, toLabel } from './common';
 import type { CommandGenerator, ElementContext } from './printer';
 
 /**
@@ -62,7 +62,13 @@ export const tspl: CommandGenerator = {
           .join('');
       }
       case 'barcode1d': {
-        const code = { CODE128: '128', EAN13: 'EAN13', UPCA: 'UPCA', CODE39: '39' }[el.symbology];
+        if (RASTER_1D.has(el.symbology)) {
+          const r = raster1D(el, dpi);
+          return bitmap(r.barsAt, r.bars, D) + (r.text ? this.element(r.text, ctx) : '');
+        }
+        const code = { CODE128: '128', EAN13: 'EAN13', UPCA: 'UPCA', CODE39: '39', EAN8: 'EAN8' }[
+          el.symbology as 'CODE128' | 'EAN13' | 'UPCA' | 'CODE39' | 'EAN8'
+        ];
         const m = el.moduleDots;
         const wide = el.symbology === 'CODE39' ? m * 3 : m;
         return `BARCODE ${at(0, 0)},"${code}",${Math.max(1, D(el.barHeightMm))},${el.humanReadable ? 1 : 0},${rot.degrees},${m},${wide},${tsplQuote(el.printerData)}\r\n`;

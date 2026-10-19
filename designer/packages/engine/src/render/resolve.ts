@@ -1,4 +1,4 @@
-import { BarcodeError, encode1D, encode2D, moduleCount1D, moduleDots, symbolSize2D } from '../barcode/encode';
+import { BarcodeError, encode1D, encode2D, moduleCount1D, moduleDots, RASTER_1D, symbolSize2D } from '../barcode/encode';
 import { compileString, renderString, TemplateError } from '../data/template-string';
 import { boundsOf, containsBox } from '../geometry/bbox';
 import { dotsToMm, mmToDots } from '../geometry/units';
@@ -259,7 +259,8 @@ export function resolveLabel(
   }
 
   function resolve1D(obj: Barcode1DObject, r: { text: string; dynamic: boolean }): ResolvedBarcode1D {
-    const enc = opts.barcodeDetail === 'size' ? null : encode1D(obj.symbology, r.text);
+    // Simbologia desenhada como imagem (RASTER_1D) precisa das barras até no modo 'size'.
+    const enc = opts.barcodeDetail === 'size' && !RASTER_1D.has(obj.symbology) ? null : encode1D(obj.symbology, r.text);
     const meta = enc
       ? { printerData: enc.printerData, humanText: enc.humanText, count: enc.modules.length }
       : moduleCount1D(obj.symbology, r.text);

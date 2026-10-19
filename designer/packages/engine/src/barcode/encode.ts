@@ -2,7 +2,43 @@
 // não a função que devolve barras/matriz (essa é o `raw` do objeto default, ToRaw).
 import bwipjs from 'bwip-js';
 import type { QrErrorLevel, Symbology1D, Symbology2D } from '../model/objects';
-import { ean13CheckDigit, isValidEan13, isValidUpcA, upcaCheckDigit } from './checksum';
+import { ean13CheckDigit, gs1Check, isValidEan13, isValidGs1Number, isValidUpcA, upcaCheckDigit } from './checksum';
+
+/**
+ * Simbologias 1D desenhadas como IMAGEM nas linguagens de impressora (ZPL/TSPL/EPL), a partir da
+ * mesma codificação da prévia. Motivo (2026-10-19): os comandos nativos de ITF-14 e GS1-128 mudam
+ * entre ZPL, TSPL e EPL (FNC1, razão de barras, verificador) e não foram validados em impressora;
+ * como imagem, com módulo inteiro em dots, a etiqueta sai idêntica à prévia em qualquer uma.
+ * Só sai daqui com validação física do comando nativo.
+ */
+export const RASTER_1D: ReadonlySet<Symbology1D> = new Set<Symbology1D>(['ITF14', 'GS1_128']);
+
+/** AIs com número GS1 de tamanho fixo e verificador. */
+const GS1_FIXED_CHECKED: Record<string, number> = { '00': 18, '01': 14, '02': 14 };
+
+/**
+ * GS1-128 no formato legível "(01)07891234567895(17)261231(10)LOTE1". Valida a forma, o tamanho
+ * máximo (48 caracteres de dado) e o verificador dos AIs 00/01/02; o resto dos AIs é conferido
+ * pelo codificador (lint GS1 do bwip-js).
+ */
+function normalizeGs1(value: string): string {
+  const v = value.replace(/\s+/g, '');
+  if (!/^(\(\d{2,4}\)[^()]+)+$/.test(v)) {
+    throw new BarcodeError(`GS1-128 precisa do formato (AI)dado, ex.: (01)07891234567895(10)LOTE1 ("${value}")`);
+  }
+  let length = 0;
+  for (const [, ai, data] of v.matchAll(/\((\d{2,4})\)([^()]+)/g)) {
+    length += ai!.length + data!.length;
+    const fixed = GS1_FIXED_CHECKED[ai!];
+    if (fixed === undefined) continue;
+    if (!new RegExp(`^\\d{${fixed}}$`).test(data!)) throw new BarcodeError(`GS1-128: AI (${ai}) precisa de ${fixed} dígitos ("${data}")`);
+    if (!isValidGs1Number(data!)) {
+      throw new BarcodeError(`GS1-128: AI (${ai}) com dígito verificador errado ("${data}", esperado ${gs1Check(data!.slice(0, -1))})`);
+    }
+  }
+  if (length > 48) throw new BarcodeError(`GS1-128 aceita no máximo 48 caracteres de dado (tem ${length})`);
+  return v;
+}
 
 /**
  * Codificação de códigos de barras. A MESMA codificação alimenta a prévia, SVG, PDF e o cálculo
@@ -57,6 +93,25 @@ export function normalize1D(symbology: Symbology1D, raw: string): { printerData:
       if (!isValidUpcA(d)) throw new BarcodeError(`UPC-A com dígito verificador errado ("${value}")`);
       return { printerData: d.slice(0, 11), full: d };
     }
+    case 'EAN8': {
+      const d = value.replace(/\s/g, '');
+      if (/^\d{7}$/.test(d)) return { printerData: d, full: d + gs1Check(d) };
+      if (!/^\d{8}$/.test(d)) throw new BarcodeError(`EAN-8 precisa de 7 ou 8 dígitos ("${value}")`);
+      if (!isValidGs1Number(d)) throw new BarcodeError(`EAN-8 com dígito verificador errado ("${value}", esperado ${gs1Check(d.slice(0, 7))})`);
+      return { printerData: d.slice(0, 7), full: d };
+    }
+    case 'ITF14': {
+      const d = value.replace(/\s/g, '');
+      const full = /^\d{13}$/.test(d) ? d + gs1Check(d) : d;
+      if (!/^\d{14}$/.test(full)) throw new BarcodeError(`ITF-14 precisa de 13 ou 14 dígitos ("${value}")`);
+      if (!isValidGs1Number(full)) throw new BarcodeError(`ITF-14 com dígito verificador errado ("${value}", esperado ${gs1Check(full.slice(0, 13))})`);
+      // Desenhado como imagem (RASTER_1D): a impressora recebe as barras, não este dado.
+      return { printerData: full, full };
+    }
+    case 'GS1_128': {
+      const full = normalizeGs1(value);
+      return { printerData: full, full };
+    }
     case 'CODE39': {
       const d = value.toUpperCase();
       if (!CODE39_CHARS.test(d)) throw new BarcodeError(`Code 39 aceita só A-Z, 0-9 e - . $ / + % espaço ("${value}")`);
@@ -72,7 +127,15 @@ export function normalize1D(symbology: Symbology1D, raw: string): { printerData:
   }
 }
 
-const BCID_1D: Record<Symbology1D, string> = { CODE128: 'code128', EAN13: 'ean13', UPCA: 'upca', CODE39: 'code39' };
+const BCID_1D: Record<Symbology1D, string> = {
+  CODE128: 'code128',
+  EAN13: 'ean13',
+  UPCA: 'upca',
+  CODE39: 'code39',
+  EAN8: 'ean8',
+  ITF14: 'itf14',
+  GS1_128: 'gs1-128',
+};
 
 type RawResult = { sbs?: number[]; pixs?: number[]; pixx?: number; pixy?: number };
 
@@ -114,9 +177,9 @@ export function encode1D(symbology: Symbology1D, rawValue: string): Encoded1D {
  * os demais dependem do conteúdo e usam a codificação (com cache).
  */
 export function moduleCount1D(symbology: Symbology1D, rawValue: string): { printerData: string; humanText: string; count: number } {
-  if (symbology === 'EAN13' || symbology === 'UPCA') {
+  if (symbology === 'EAN13' || symbology === 'UPCA' || symbology === 'EAN8') {
     const { printerData, full } = normalize1D(symbology, rawValue);
-    return { printerData, humanText: full, count: 95 };
+    return { printerData, humanText: full, count: symbology === 'EAN8' ? 67 : 95 };
   }
   const enc = encode1D(symbology, rawValue);
   return { printerData: enc.printerData, humanText: enc.humanText, count: enc.modules.length };

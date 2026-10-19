@@ -1,5 +1,8 @@
-/** Dígito verificador GS1 (EAN-13 sobre 12 dígitos, UPC-A sobre 11): pesos 1/3 a partir da direita. */
-function gs1Check(digits: string): string {
+/**
+ * Dígito verificador GS1 (mod 10, pesos 3/1 a partir da direita). O mesmo algoritmo serve a
+ * EAN-8, EAN-13, UPC-A, GTIN-14 (ITF-14, AI 01/02) e SSCC (AI 00).
+ */
+export function gs1Check(digits: string): string {
   let sum = 0;
   for (let i = 0; i < digits.length; i++) {
     const fromRight = digits.length - 1 - i;
@@ -24,4 +27,9 @@ export function isValidEan13(v: string): boolean {
 
 export function isValidUpcA(v: string): boolean {
   return /^\d{12}$/.test(v) && gs1Check(v.slice(0, 11)) === v[11];
+}
+
+/** Qualquer número GS1 com verificador no fim (8, 12, 13, 14 ou 18 dígitos). */
+export function isValidGs1Number(v: string): boolean {
+  return /^\d{8}$|^\d{12,14}$|^\d{18}$/.test(v) && gs1Check(v.slice(0, -1)) === v[v.length - 1];
 }

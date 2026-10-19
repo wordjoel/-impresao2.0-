@@ -1,5 +1,5 @@
-import { MonoBitmap, type ResolvedElement } from '@athos-label/engine';
-import { dots, layoutLines, localRectBounds, quarterTurn, rotationIssue } from './common';
+import { MonoBitmap, RASTER_1D, type ResolvedElement } from '@athos-label/engine';
+import { dots, layoutLines, localRectBounds, quarterTurn, raster1D, rotationIssue } from './common';
 import type { CommandGenerator, ElementContext } from './printer';
 
 /**
@@ -67,6 +67,10 @@ export const zpl: CommandGenerator = {
           .join('');
       }
       case 'barcode1d': {
+        if (RASTER_1D.has(el.symbology)) {
+          const r = raster1D(el, dpi);
+          return graphic(D(r.barsAt.x), D(r.barsAt.y), r.bars) + (r.text ? this.element(r.text, ctx) : '');
+        }
         const b = localRectBounds(el, rot.degrees, 0, 0, el.barsWidthMm, el.height);
         const h = Math.max(1, D(el.barHeightMm));
         const hr = el.humanReadable ? 'Y' : 'N';
@@ -75,7 +79,8 @@ export const zpl: CommandGenerator = {
           EAN13: `^BE${o},${h},${hr},N`,
           UPCA: `^BU${o},${h},${hr},N,Y`,
           CODE39: `^B3${o},N,${h},${hr},N`,
-        }[el.symbology];
+          EAN8: `^B8${o},${h},${hr},N`,
+        }[el.symbology as 'CODE128' | 'EAN13' | 'UPCA' | 'CODE39' | 'EAN8'];
         return `${fo(D(b.x), D(b.y))}^BY${el.moduleDots},3,${h}${cmd}^FH_^FD${zplEscape(el.printerData)}^FS\n`;
       }
       case 'barcode2d': {
