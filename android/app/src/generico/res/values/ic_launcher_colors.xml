@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Azul da borda do ícone de origem (média das bordas do quadrado azul). -->
+    <color name="ic_launcher_background_generico">#0442D8</color>
+</resources>

@@ -25,7 +25,7 @@ Cada cliente é um *product flavor* em `android/app/build.gradle.kts`:
 | `carrefour` (padrão) | Carrefour | Carrefour Print Bridge | bloqueada |
 | `roldao` | Roldão | Roldão Print Bridge | bloqueada |
 | `assai` | Assaí | Assaí Print Bridge | bloqueada |
-| `generico` | ATHOS | A.print.Bridge | liberada (demonstração) |
+| `generico` | ATHOS | IMPRESSÃO A | liberada (demonstração) |
 
 **O `applicationId` é o mesmo em todos (`br.com.atos.printbridge`).** Os apps clientes da API se
 ligam a esse pacote, e a permissão `signature`, a licença por aparelho e a config do MDM são

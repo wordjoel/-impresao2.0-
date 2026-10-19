@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Ícone da versão genérico (IMPRESSÃO A): impressora com selo "A", fornecido pelo responsável em 2026-10-19.
+     Só este flavor; Carrefour/Roldão/Assaí continuam com o ícone de main. Sem camada monocromática
+     (ícone temático só existe a partir do Android 13; o CF550 é Android 11). -->
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@color/ic_launcher_background_generico" />
+    <foreground android:drawable="@mipmap/ic_launcher_foreground" />
+</adaptive-icon>

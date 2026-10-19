@@ -40,8 +40,8 @@ object BrandPresets {
 
     val GENERIC = BrandConfig(
         brandId = BrandId.GENERIC.key,
-        displayName = "Atos Print Bridge",
-        shortName = "Atos",
+        displayName = "IMPRESSÃO A",
+        shortName = "IMPRESSÃO A",
         primaryColor = 0xFF1B2A4A,
         secondaryColor = 0xFF2FB6A8,
         accentColor = 0xFF4FD1C5,
