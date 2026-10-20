@@ -50,6 +50,11 @@ export interface PrintJobSpec {
   routing: Routing;
   user: string;
   createdAt: string;
+  /**
+   * Início da faixa de numeração reservada para este job (`SEQ` usa seqStart + posição da linha).
+   * Gravado no job: retomar ou repetir usa os MESMOS números. Ausente/0 em jobs antigos = como antes.
+   */
+  seqStart?: number;
 }
 
 export interface PrinterGroup {
@@ -84,14 +89,19 @@ export interface AuditEntry {
   templateHash: string;
   /** SHA-256 dos bytes desta etiqueta exatamente como foram à impressora. */
   contentHash: string;
+  /** Posição usada pelo SEQ nesta etiqueta (seqStart + linha): rastreia o número impresso. */
+  seqIndex?: number;
   status: 'SENT';
   at: string;
 }
 
 export interface OrchestratorDeps {
   printers: ReadonlyMap<string, PrinterProfile>;
-  /** Comandos de UMA etiqueta já com cópias, como bytes prontos para o socket. */
-  renderLabel(printer: PrinterProfile, row: DataRow, index: number, copies: number): Uint8Array;
+  /**
+   * Comandos de UMA etiqueta já com cópias, como bytes prontos para o socket. `seqOffset` é o
+   * início da faixa de numeração do job (só o SEQ soma; `index` segue a posição no lote).
+   */
+  renderLabel(printer: PrinterProfile, row: DataRow, index: number, copies: number, seqOffset: number): Uint8Array;
   send(printer: PrinterProfile, payload: Uint8Array): Promise<void>;
   status?(printer: PrinterProfile): Promise<PrinterStatus>;
   saveState(state: JobState): Promise<void>;
@@ -132,6 +142,44 @@ export function compileRouting(routing: Routing): (row: DataRow, index: number) 
     }
     return routing.defaultPrinterId;
   };
+}
+
+// ---------------------------------------------------------------- numeração contínua (passo 4)
+
+export type SequenceReset = 'NEVER' | 'DAILY';
+
+/** Contador persistente de um template (o print-server guarda um por templateId). */
+export interface SequenceCounter {
+  /** Próxima posição livre (0 = primeira etiqueta; o número impresso vem do SEQ do template). */
+  next: number;
+  reset: SequenceReset;
+  /** Dia local (AAAA-MM-DD) da última reserva; base do reinício diário. */
+  day: string;
+}
+
+const localDay = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+export function newSequenceCounter(reset: SequenceReset = 'NEVER', now = new Date()): SequenceCounter {
+  return { next: 0, reset, day: localDay(now) };
+}
+
+/**
+ * Reserva `count` posições seguidas. A faixa é reservada na CRIAÇÃO do job e gravada nele: nunca
+ * repete número entre jobs (nem com dois jobs criados juntos, nem com cancelamento e novo job). O
+ * custo é que job cancelado deixa lacuna — visível pela faixa do job e pela auditoria. Número
+ * repetido em etiqueta de rastreio é pior que lacuna.
+ */
+export function reserveSequence(counter: SequenceCounter, count: number, now = new Date()): { start: number; counter: SequenceCounter } {
+  if (!Number.isInteger(count) || count < 1) throw new RangeError('Reserva precisa de pelo menos 1 posição');
+  const today = localDay(now);
+  const base = counter.reset === 'DAILY' && counter.day !== today ? 0 : counter.next;
+  return { start: base, counter: { ...counter, next: base + count, day: today } };
+}
+
+/** O template usa SEQ(...) em algum objeto visível? Só esses consomem numeração. */
+export function usesSequence(template: { objects: readonly { visible: boolean; content?: unknown }[] }): boolean {
+  return template.objects.some((o) => o.visible && typeof o.content === 'string' && /\bSEQ\s*\(/i.test(o.content));
 }
 
 export function planJob(spec: PrintJobSpec, printers: ReadonlyMap<string, PrinterProfile>, now = new Date()): JobState {
@@ -201,7 +249,8 @@ export class PrintOrchestrator {
         }
 
         const slice = group.indices.slice(group.next, group.next + state.spec.chunkSize);
-        const labels = slice.map((i) => this.deps.renderLabel(printer, state.spec.rows[i]!, i, state.spec.copies));
+        const seqStart = state.spec.seqStart ?? 0;
+        const labels = slice.map((i) => this.deps.renderLabel(printer, state.spec.rows[i]!, i, state.spec.copies, seqStart));
         const payload = concat(labels);
 
         try {
@@ -233,6 +282,7 @@ export class PrintOrchestrator {
             templateVersion: state.spec.templateVersion,
             templateHash: state.spec.templateHash,
             contentHash: hashes[k]!,
+            seqIndex: seqStart + rowIndex,
             status: 'SENT' as const,
             at,
           })),

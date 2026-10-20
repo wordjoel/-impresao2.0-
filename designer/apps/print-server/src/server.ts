@@ -2,9 +2,14 @@ import http from 'node:http';
 import { timingSafeEqual } from 'node:crypto';
 import {
   createId,
+  newSequenceCounter,
   planJob,
   PrintOrchestrator,
+  reserveSequence,
   RoutingError,
+  usesSequence,
+  type SequenceCounter,
+  type SequenceReset,
   type DataRow,
   type JobState,
   type LabelTemplate,
@@ -80,7 +85,7 @@ export async function createPrintServer(opts: ServerOptions): Promise<http.Serve
       get printers() {
         return printers;
       },
-      renderLabel(printer, row, index, copies) {
+      renderLabel(printer, row, index, copies, seqOffset) {
         // O job em andamento define o template; um compilado por (job, impressora).
         const key = `${currentJob}|${printer.id}`;
         let c = compiled.get(key);
@@ -88,7 +93,7 @@ export async function createPrintServer(opts: ServerOptions): Promise<http.Serve
           c = compileLabel(templates.get(currentJob)!, { language: printer.language, dpi: printer.dpi });
           compiled.set(key, c);
         }
-        return c.encode(c.render(row, index, copies).commands);
+        return c.encode(c.render(row, index, copies, seqOffset).commands);
       },
       send: opts.send ?? ((p, payload) => sendTcp(p.host, p.port, payload)),
       status: opts.status ?? ((p) => printerStatus(p)),
@@ -134,8 +139,24 @@ export async function createPrintServer(opts: ServerOptions): Promise<http.Serve
     running.set(record.state.spec.id, p);
   };
 
+  // Contadores (numeração contínua): leitura-modificação-gravação sempre em fila, para dois
+  // jobs criados ao mesmo tempo nunca receberem a mesma faixa.
+  let counterLock: Promise<unknown> = Promise.resolve();
+  const withCounters = <T>(fn: (c: Record<string, SequenceCounter>) => Promise<{ value: T; save: boolean }> | { value: T; save: boolean }) => {
+    const p = counterLock.then(async () => {
+      const all = await store.counters();
+      const { value, save } = await fn(all);
+      if (save) await store.saveCounters(all);
+      return value;
+    });
+    counterLock = p.catch(() => {});
+    return p;
+  };
+
   const summary = (s: JobState) => ({
     id: s.spec.id,
+    // Faixa de numeração reservada (SEQ); null se o template não numera.
+    seqRange: s.spec.seqStart === undefined ? null : { first: s.spec.seqStart, last: s.spec.seqStart + s.spec.rows.length - 1 },
     status: s.status,
     sentLabels: s.sentLabels,
     totalLabels: s.totalLabels,
@@ -214,13 +235,22 @@ export async function createPrintServer(opts: ServerOptions): Promise<http.Serve
         routing: r.routing,
         user: String(r.user ?? 'desconhecido').slice(0, 120),
         createdAt: new Date().toISOString(),
-      };
+      } as JobState['spec'];
       let state: JobState;
       try {
+        // Valida o roteamento ANTES de reservar números: job recusado não consome faixa.
         state = planJob(spec, printers);
       } catch (e) {
         if (e instanceof RoutingError) throw new HttpError(400, e.message);
         throw e;
+      }
+      if (usesSequence(r.template)) {
+        const seqStart = await withCounters((all) => {
+          const res = reserveSequence(all[spec.templateId] ?? newSequenceCounter(), spec.rows.length);
+          all[spec.templateId] = res.counter;
+          return { value: res.start, save: true };
+        });
+        state = { ...state, spec: { ...state.spec, seqStart } };
       }
       const record = { state, template: r.template };
       await store.saveJob(record);
@@ -250,6 +280,21 @@ export async function createPrintServer(opts: ServerOptions): Promise<http.Serve
         }
         return { ok: true };
       }
+    }
+    if (a === 'counters' && !b && m === 'GET') return store.counters();
+    if (a === 'counters' && b && m === 'PUT') {
+      // Ajuste manual: próximo número e regra de reinício. Mudança explícita, com token.
+      const p = await body<{ next?: unknown; reset?: unknown }>(req);
+      const next = p.next;
+      const reset = p.reset;
+      if (next !== undefined && !(Number.isInteger(next) && (next as number) >= 0)) throw new HttpError(400, 'next precisa ser inteiro >= 0');
+      if (reset !== undefined && reset !== 'NEVER' && reset !== 'DAILY') throw new HttpError(400, 'reset precisa ser NEVER ou DAILY');
+      return withCounters((all) => {
+        const cur = all[b] ?? newSequenceCounter();
+        all[b] = { ...cur, ...(next !== undefined ? { next: next as number } : {}), ...(reset !== undefined ? { reset: reset as SequenceReset } : {}) };
+        log(`contador ${b}: ${JSON.stringify(all[b])}`);
+        return { value: all[b], save: true };
+      });
     }
     if (a === 'audit' && m === 'GET') return store.audit(url.searchParams.get('jobId') ?? undefined);
     throw new HttpError(404, 'Rota não encontrada');

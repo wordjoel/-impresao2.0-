@@ -30,7 +30,8 @@ export interface CompiledLabel {
   language: PrinterLanguage;
   dpi: number;
   /** Comandos de uma etiqueta completa (cabeçalho + objetos + rodapé com cópias). */
-  render(row: Readonly<Record<string, unknown>>, index: number, copies?: number): { commands: string; issues: Issue[] };
+  /** `seqOffset`: início da faixa de numeração do job (só o SEQ soma). */
+  render(row: Readonly<Record<string, unknown>>, index: number, copies?: number, seqOffset?: number): { commands: string; issues: Issue[] };
   encode(commands: string): Uint8Array;
   stats: { staticObjects: number; dynamicObjects: number };
 }
@@ -70,10 +71,10 @@ export function compileLabel(template: LabelTemplate, opts: CompileOptions): Com
     dpi: opts.dpi,
     stats: { staticObjects: visible.length - dynamicIds.size, dynamicObjects: dynamicIds.size },
     encode: (c) => gen.encode(c),
-    render(row, index, copies = 1) {
+    render(row, index, copies = 1, seqOffset = 0) {
       const ctx: ElementContext = { dpi: opts.dpi, issues: [], rasterizeText: opts.rasterizeText };
       const resolved = dynamicIds.size
-        ? resolveLabel(dynTemplate, row, { ...resolveOpts, index, now: opts.now?.() })
+        ? resolveLabel(dynTemplate, row, { ...resolveOpts, index, seqOffset, now: opts.now?.() })
         : { elements: [], issues: [] };
       const dyn = new Map(resolved.elements.map((el) => [el.id, el]));
       let commands = header;

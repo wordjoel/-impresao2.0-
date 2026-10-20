@@ -104,7 +104,25 @@ Texto original do passo:
 - **Aceite:** primeira aba lida com cabeçalho; datas e números do Excel convertidos sem perder zeros à
   esquerda (EAN como texto); planilha vazia/corrompida recusada com motivo.
 
-### Passo 4 — Numeração contínua entre lotes
+### Passo 4 — Numeração contínua entre lotes — FEITO (2026-10-19)
+
+- Contador persistente por template no print-server (`counters.json`, gravação atômica), regra
+  `NEVER` ou `DAILY` (dia local), ajuste manual por `PUT /api/counters/:templateId` (`next`, `reset`,
+  validados, com token); `GET /api/counters` lista.
+- **Mudança de regra em relação ao texto abaixo, de propósito:** a faixa é **reservada na criação do
+  job** e gravada nele (`spec.seqStart`), não avançada só no `SENT`. Motivo: avançando no `SENT`, dois
+  jobs criados juntos, ou um job cancelado e refeito, poderiam receber os **mesmos números**; número
+  repetido em etiqueta de rastreio é pior que lacuna. Custo: job cancelado deixa lacuna, visível na
+  faixa do job (`seqRange` no resumo) e na auditoria (`seqIndex` por etiqueta).
+- Retomar/reenviar usa a faixa gravada: mesmos números. Job recusado (roteamento inválido) e template
+  sem `SEQ` não consomem número. Reserva em fila (sem corrida entre requisições).
+- Só o `SEQ` soma a faixa (`seqOffset`); `$index`/`$row` continuam a posição dentro do lote.
+- Testes: `engine/test/sequence.test.ts` (6) e `print-server/test/sequence.test.ts` (5, ponta a ponta com
+  impressora TCP falsa conferindo os números nos bytes, retomada, concorrência, persistência ao religar).
+  Suíte: **188 passando** (engine 140, exporters 34, print-server 14); `typecheck` e `build` sem erros.
+- Pendente: tela no designer para ver/ajustar o contador (hoje só pela API).
+
+Texto original do passo:
 
 - **Hoje:** `SEQ(início, passo, dígitos)` conta pela posição **dentro do lote** — recomeça a cada lote.
 - **Fazer:** contador persistente por template no `print-server`, avançado só depois de confirmação

@@ -1,6 +1,6 @@
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
-import type { AuditEntry, JobState, LabelTemplate, PrinterProfile } from '@athos-label/engine';
+import type { AuditEntry, JobState, LabelTemplate, PrinterProfile, SequenceCounter } from '@athos-label/engine';
 
 /**
  * Persistência em arquivos (sem banco): checkpoint do job em JSON com gravação atômica
@@ -59,6 +59,15 @@ export class FileStore {
 
   savePrinters(p: PrinterProfile[]): Promise<void> {
     return this.writeAtomic(this.file('printers.json'), JSON.stringify(p, null, 2));
+  }
+
+  /** Contadores de numeração contínua, um por templateId (passo 4). */
+  counters(): Promise<Record<string, SequenceCounter>> {
+    return this.readJson(this.file('counters.json'), {});
+  }
+
+  saveCounters(c: Record<string, SequenceCounter>): Promise<void> {
+    return this.writeAtomic(this.file('counters.json'), JSON.stringify(c, null, 2));
   }
 
   saveJob(r: JobRecord): Promise<void> {

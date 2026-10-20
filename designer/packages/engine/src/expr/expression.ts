@@ -26,8 +26,13 @@ export class ExpressionError extends Error {
 
 export interface EvalContext {
   row: Readonly<Record<string, unknown>>;
-  /** Índice global da etiqueta no lote (0 = primeira). Base do SEQ. */
+  /** Índice global da etiqueta no lote (0 = primeira). Base do SEQ, $index e $row. */
   index: number;
+  /**
+   * Início da faixa reservada para o job (numeração contínua entre lotes). Soma SÓ no SEQ:
+   * $index/$row continuam sendo a posição dentro do lote.
+   */
+  seqOffset?: number;
   /** Relógio injetável (testes e reimpressão determinística). */
   now: Date;
   /** Campos referenciados que não existem na linha (usado pela validação). */
@@ -397,8 +402,8 @@ function callFunction(n: Extract<Node, { k: 'call' }>, ctx: EvalContext): Value 
     case 'CURRENCY':
       return formatCurrency(nArg(0));
     case 'SEQ': {
-      // Auto-incremento: início + passo × posição no lote, com zeros à esquerda.
-      const v = nArg(0, 1) + nArg(1, 1) * ctx.index;
+      // Auto-incremento: início + passo × (faixa reservada + posição no lote), com zeros à esquerda.
+      const v = nArg(0, 1) + nArg(1, 1) * ((ctx.seqOffset ?? 0) + ctx.index);
       return String(v).padStart(nArg(2, 0), '0');
     }
     case 'TODAY': {

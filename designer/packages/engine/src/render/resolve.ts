@@ -169,6 +169,8 @@ export interface ResolveOptions {
   brand?: BrandTheme;
   /** Posição da etiqueta no lote (SEQ, $index). */
   index?: number;
+  /** Início da faixa de numeração reservada para o job; soma só no SEQ (ver EvalContext). */
+  seqOffset?: number;
   now?: Date;
   /** Checagens de geometria do template (uma vez por lote basta). */
   checkGeometry?: boolean;
@@ -198,7 +200,7 @@ export function resolveLabel(
   const measurer = opts.measurer ?? afmMeasurer;
   const brand = opts.brand ?? DEFAULT_BRAND;
   const missing = new Set<string>();
-  const ctx = { row, index: opts.index ?? 0, now: opts.now ?? new Date(), missing };
+  const ctx = { row, index: opts.index ?? 0, seqOffset: opts.seqOffset ?? 0, now: opts.now ?? new Date(), missing };
   const issues: Issue[] = [];
   const elements: ResolvedElement[] = [];
 
