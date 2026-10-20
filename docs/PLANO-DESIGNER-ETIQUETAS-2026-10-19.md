@@ -173,12 +173,22 @@ autenticação. Decisões tiradas do código:
 | Hash e assinatura sobre os bytes de `packageJson` (string), não sobre JSON canônico | O Kotlin não precisa reproduzir o `canonicalJson` do JS |
 | Assinatura ES256, chave pública só pelo provisionamento | Mesmo algoritmo da licença do app (`EcdsaLicenseTokenVerifier`); pacote adulterado é recusado mesmo em HTTP |
 | Administração só em 127.0.0.1:7171 (token atual); coletor em listener separado na LAN (7172), desligado por padrão, token por aparelho, só leitura | O token de administração nunca sai do PC |
-| Conferência de versão a cada impressão; sem resposta em 3 s, não imprime | Aceite do passo: "não imprime versão antiga sem avisar" |
+| Conferência de versão a cada impressão; sem resposta em 3 s, só imprime dentro da janela offline de 15 min (P1) | Aceite do passo: "não imprime versão antiga sem avisar" |
 | Relatório de impressão best-effort e idempotente (`reportId`) | Mesma auditoria SHA-256 por etiqueta do PC, sem travar a impressão |
 | **O pacote vira template da ponte**, usado por qualquer app chamador via `IPrintBridgeService.printJob` (`DocumentType.TEMPLATE`, `templateId` + `variables`), não só pela tela do IMPRESSÃO A | O APK é a ponte de impressão do coletor (definição do usuário, 2026-10-20). A API já tem esse tipo e os erros `UNKNOWN_TEMPLATE`, `MISSING_VARIABLES`, `INVALID_VARIABLE_VALUE`, `LANGUAGE_MISMATCH`. Única adição: `TEMPLATE_VERSION_UNCONFIRMED` |
 | ZPL/TSPL bruto, PDF, imagem, Compartilhar e impressão do sistema ficam intocados | O passo 6 só soma uma fonte de templates; nada muda nos caminhos atuais da ponte |
 
-**Pendências (decisão do usuário antes do código):**
+**Decisões do usuário (2026-10-20), todas na opção recomendada:**
+
+| | Decisão |
+|---|---|
+| P1 | **Janela offline de 15 min.** Sem resposta do PC, imprime com o pacote guardado se a última conferência bem-sucedida tiver menos de 15 min (relógio monotônico; reinício do aparelho zera a janela). O relatório marca `versionCheck=OFFLINE_GRACE`. Depois disso: `TEMPLATE_VERSION_UNCONFIRMED` |
+| P2 | **HTTP na LAN da loja no v1**, com pacote assinado ES256 e token por aparelho. TLS fica para v2. Cleartext liberado só para o IP do PC no `network_security_config` |
+| P3 | **TSPL** é o alvo padrão publicado para o MB241 |
+| P4 | **Sem `SEQ` no coletor no v1** (publicar recusa com `SEQUENCE`) |
+| P5 | **API local continua `signature`** (só apps ATHOS). Terceiros seguem por Compartilhar e impressão do sistema. Lista de apps autorizados pelo MDM fica para depois |
+
+Texto original das pendências, mantido para histórico:
 - **P1. Sem rede = nunca imprime?** O contrato segue o aceite ao pé da letra. Como o pacote é usado por
   todos os apps pela ponte, uma queda do Wi-Fi para **toda** impressão de template do designer no
   coletor. Os outros caminhos (ZPL bruto, PDF) continuam. Alternativa: aceitar a versão guardada se a

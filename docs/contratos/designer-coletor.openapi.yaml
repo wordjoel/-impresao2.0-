@@ -257,10 +257,13 @@ paths:
         - responde com outro packageSha256: baixa o pacote novo, valida e só então imprime, avisando
           "atualizado para vN";
         - 404: não imprime ("template despublicado no PC");
-        - sem resposta em 3 s, erro de rede ou 5xx: NÃO imprime. Mensagem: "Sem conexão com o PC
-          das etiquetas: não dá para confirmar a versão. Nada foi impresso." Para app chamador:
-          ok=false, errorCode TEMPLATE_VERSION_UNCONFIRMED. Não há modo offline no v1 (ver
-          pendência P1 no plano).
+        - sem resposta em 3 s, erro de rede ou 5xx: janela offline (decisão P1, 2026-10-20). Se a
+          última conferência BEM-SUCEDIDA deste template foi há menos de 15 min (relógio monotônico
+          do aparelho, elapsedRealtime, para não ser enganado por troca de hora), imprime com o
+          pacote guardado e o relatório leva versionCheck=OFFLINE_GRACE. Passou de 15 min, ou o
+          aparelho reiniciou desde a última conferência: NÃO imprime. Mensagem: "Sem conexão com o
+          PC das etiquetas: não dá para confirmar a versão. Nada foi impresso." Para app chamador:
+          ok=false, errorCode TEMPLATE_VERSION_UNCONFIRMED.
       security:
         - deviceToken: []
       parameters:
@@ -618,7 +621,7 @@ components:
 
     PrintReport:
       type: object
-      required: [reportId, templateId, templateVersion, packageSha256, target, printer, status, labels, at]
+      required: [reportId, templateId, templateVersion, packageSha256, target, printer, status, versionCheck, labels, at]
       properties:
         reportId:
           type: string
@@ -644,6 +647,12 @@ components:
         errorMessage:
           type: string
           nullable: true
+        versionCheck:
+          type: string
+          enum: [CONFIRMED, OFFLINE_GRACE]
+          description: >
+            CONFIRMED = o PC respondeu na conferência desta impressão. OFFLINE_GRACE = o PC não
+            respondeu e valeu a janela de 15 min da última conferência bem-sucedida (P1).
         labels:
           type: array
           minItems: 1
