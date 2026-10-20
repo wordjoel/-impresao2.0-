@@ -159,6 +159,47 @@ Texto original do passo:
   e hash conferidos no aparelho; sem rede, o app recusa com mensagem clara (não imprime versão antiga
   sem avisar).
 
+**Contrato escrito (2026-10-20, sem código):** `docs/contratos/designer-coletor.openapi.yaml`. Fica num
+arquivo separado de `openapi.yaml` porque aquele é a API de nuvem, com outro servidor e outra
+autenticação. Decisões tiradas do código:
+
+| Decisão | Por quê |
+|---|---|
+| O PC compila um **pacote**: comandos prontos (ZPL/TSPL, por DPI) + lacunas; o app só valida, escapa e concatena | O app Android não tem o motor do designer (expressões, quebra de linha, auto-fit, medição). Lógica nos dois lados = etiquetas diferentes |
+| **Vetores de conformidade** no pacote (valores → SHA-256 dos bytes); o app confere ao receber | Prova no próprio aparelho que o app monta exatamente os bytes do PC |
+| v1 recusa ao publicar: `SEQ`, datas, expressões/pipes, auto-fit/várias linhas, imagem de campo, DataMatrix/PDF417/ITF-14/GS1-128/Code 39 dinâmicos | A geometria deles depende do valor ou precisa do motor. Objeto **estático** de qualquer tipo vai (vira comando pronto) |
+| Code 128 dinâmico com largura de módulo congelada para `maxLength` | No designer o módulo depende do tamanho do valor |
+| Texto dinâmico com `maxLength` conservador (glifo mais largo); passou, recusa, nunca corta | `^FB` de 1 linha sobrepõe o excesso |
+| Hash e assinatura sobre os bytes de `packageJson` (string), não sobre JSON canônico | O Kotlin não precisa reproduzir o `canonicalJson` do JS |
+| Assinatura ES256, chave pública só pelo provisionamento | Mesmo algoritmo da licença do app (`EcdsaLicenseTokenVerifier`); pacote adulterado é recusado mesmo em HTTP |
+| Administração só em 127.0.0.1:7171 (token atual); coletor em listener separado na LAN (7172), desligado por padrão, token por aparelho, só leitura | O token de administração nunca sai do PC |
+| Conferência de versão a cada impressão; sem resposta em 3 s, não imprime | Aceite do passo: "não imprime versão antiga sem avisar" |
+| Relatório de impressão best-effort e idempotente (`reportId`) | Mesma auditoria SHA-256 por etiqueta do PC, sem travar a impressão |
+| **O pacote vira template da ponte**, usado por qualquer app chamador via `IPrintBridgeService.printJob` (`DocumentType.TEMPLATE`, `templateId` + `variables`), não só pela tela do IMPRESSÃO A | O APK é a ponte de impressão do coletor (definição do usuário, 2026-10-20). A API já tem esse tipo e os erros `UNKNOWN_TEMPLATE`, `MISSING_VARIABLES`, `INVALID_VARIABLE_VALUE`, `LANGUAGE_MISMATCH`. Única adição: `TEMPLATE_VERSION_UNCONFIRMED` |
+| ZPL/TSPL bruto, PDF, imagem, Compartilhar e impressão do sistema ficam intocados | O passo 6 só soma uma fonte de templates; nada muda nos caminhos atuais da ponte |
+
+**Pendências (decisão do usuário antes do código):**
+- **P1. Sem rede = nunca imprime?** O contrato segue o aceite ao pé da letra. Como o pacote é usado por
+  todos os apps pela ponte, uma queda do Wi-Fi para **toda** impressão de template do designer no
+  coletor. Os outros caminhos (ZPL bruto, PDF) continuam. Alternativa: aceitar a versão guardada se a
+  última conferência bem-sucedida tiver menos de N minutos, registrando isso no relatório. Não depende de
+  tela, então serve também para app chamador.
+- **P5. "Qualquer app" pela API local.** Hoje a API AIDL e o intent exigem a permissão `signature`: só apps
+  assinados com a chave da ATHOS usam (decisão da Fase 1, `android/docs/entrega/FASE1-PRINT-BRIDGE-CORE.md`).
+  App de terceiro (WMS, ERP de outro fornecedor) só chega pela impressão do sistema ou pelo Compartilhar
+  (PDF/imagem). Abrir para terceiros é mudança de segurança: exigiria lista de apps autorizados por pacote +
+  certificado (pelo MDM) no lugar de `signature`. Fora do passo 6; decisão sua.
+- **P2. HTTP sem TLS na rede da loja.** O pacote é assinado, mas o token do coletor trafega aberto (só dá
+  leitura de templates). TLS com certificado fixado no app fica para v2? O Android também precisa liberar
+  cleartext para o IP do PC (`network_security_config`).
+- **P3. Linguagem do MB241 no app:** TSPL (como o plano diz no passo 1) ou ZPL (o que a ponte Carrefour
+  mandou em 2026-09-29)? O pacote pode levar os dois alvos; falta saber qual publicar por padrão.
+- **P4. Numeração (`SEQ`) no coletor:** fora do v1. Se precisar, o contador do PC teria que reservar faixa
+  pela rede (rota nova).
+
+Próximo, depois das pendências: compilador de pacote + rotas no print-server (TypeScript, com testes
+contra os vetores), depois o lado Android.
+
 ## 5. Hifenização em português — FEITO (2026-10-19, sem commit)
 
 Segunda análise de referência recebida no mesmo dia ("gap do seu app × padrão enterprise") supunha um

@@ -1,0 +1,699 @@
+openapi: 3.0.3
+info:
+  title: ATHOS Label — Designer para coletor (IMPRESSÃO A)
+  version: "1.0.0-rascunho"
+  license:
+    name: Proprietary
+  description: >
+    Passo 6 de docs/PLANO-DESIGNER-ETIQUETAS-2026-10-19.md: o template desenhado no PC imprime pelo
+    coletor (CF550, app IMPRESSÃO A). CONTRATO ANTES DO CÓDIGO: nada disto está implementado ainda.
+
+
+    Separado de openapi.yaml (API de nuvem: outro servidor, outra autenticação). Aqui o servidor é o
+    print-server do designer (designer/apps/print-server), rodando no PC da loja.
+
+
+    IDEIA CENTRAL. O app não tem o motor do designer (expressões, quebra de linha, auto-fit, medição
+    de fonte). Por isso o PC entrega um PACOTE já compilado para a linguagem e o DPI da impressora:
+    comandos prontos com LACUNAS, e cada lacuna recebe o valor de um campo. O app só valida,
+    escapa e concatena. Sem lógica no app, a etiqueta sai igual à do PC. Vetores de conformidade
+    dentro do pacote provam isso no aparelho antes da primeira impressão.
+
+
+    DOIS LISTENERS. Administração (/api/coletor/*) fica só em 127.0.0.1:7171, com o token atual do
+    print-server, usado pelo designer. Coletor (/coletor/v1/*) fica num listener separado na rede
+    da loja (porta 7172), desligado por padrão e ligado por opção explícita. Só leitura de pacotes
+    e envio de relatório. O listener da LAN nunca atende rotas de administração.
+
+
+    A PONTE. O APK é a ponte de impressão do coletor: qualquer app chamador imprime e fala com a
+    impressora por ele. O pacote publicado aqui NÃO é um recurso só da tela do IMPRESSÃO A. Depois de
+    baixado e validado, vira um template da ponte, usado pela API local que já existe
+    (IPrintBridgeService.printJob com DocumentType.TEMPLATE, templateId = templateId deste
+    contrato, variables = campo → valor). Os erros reaproveitam os códigos de PrintBridgeContract:
+    UNKNOWN_TEMPLATE (não publicado ou ainda não baixado), MISSING_VARIABLES (campo obrigatório
+    vazio), INVALID_VARIABLE_VALUE (falhou na validação da lacuna, com o campo e o motivo na
+    mensagem) e LANGUAGE_MISMATCH (o pacote não tem alvo para a impressora escolhida). Única adição
+    proposta: TEMPLATE_VERSION_UNCONFIRMED (sem resposta do PC na conferência de versão). ZPL/TSPL
+    bruto, PDF, imagem, Compartilhar e a impressão do sistema seguem exatamente como hoje: este
+    contrato não muda nada nesses caminhos.
+
+
+    INTEGRIDADE. O pacote é assinado (ECDSA P-256 / SHA-256, o mesmo algoritmo da licença do app,
+    EcdsaLicenseTokenVerifier). A chave pública chega ao app no provisionamento, junto do token do
+    aparelho, e nunca é baixada da rede. Mesmo em HTTP sem TLS, um pacote adulterado é recusado.
+servers:
+  - url: http://127.0.0.1:7171
+    description: Administração (só loopback; designer no mesmo PC).
+  - url: http://{pcDaLoja}:7172
+    description: Coletor (rede da loja; listener desligado por padrão).
+    variables:
+      pcDaLoja:
+        default: 10.10.40.10
+        description: IP do PC com o print-server. Exemplo, não é endereço real.
+
+paths:
+  # ------------------------------------------------------------------ administração (designer)
+  /api/coletor/publish:
+    post:
+      operationId: publishLabel
+      tags: [admin]
+      summary: >
+        Compila e publica a versão de um template para os coletores. O print-server compila com o
+        MESMO exportador da impressão pelo PC (packages/exporters), assina e guarda. Publicar de
+        novo o mesmo templateId substitui o pacote atual: o coletor só imprime a última versão
+        publicada. Recusa (422) template que o v1 não leva ao coletor, com a lista de objetos e o
+        motivo. Nunca publica pela metade.
+      security:
+        - adminToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PublishRequest"
+      responses:
+        "201":
+          description: Publicado.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LabelSummary"
+        "400":
+          description: Corpo inválido (alvo repetido, DPI fora de 203/300/600, versão ausente).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: >
+            Template não portável no v1 (ver PortabilityProblem). errorCode TEMPLATE_NOT_PORTABLE,
+            extra.problems com a lista completa (não só o primeiro).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                errorCode: TEMPLATE_NOT_PORTABLE
+                message: "2 objeto(s) não podem ir para o coletor"
+                extra:
+                  problems:
+                    - { objectId: "n", objectName: "Contador", reason: SEQUENCE }
+                    - { objectId: "d", objectName: "Descrição", reason: TEXT_FIT }
+
+  /api/coletor/published:
+    get:
+      operationId: listPublishedLabels
+      tags: [admin]
+      security:
+        - adminToken: []
+      responses:
+        "200":
+          description: Pacotes publicados.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LabelSummary"
+
+  /api/coletor/published/{templateId}:
+    delete:
+      operationId: unpublishLabel
+      tags: [admin]
+      summary: >
+        Despublica. Na próxima conferência de versão o coletor recebe 404 LABEL_NOT_PUBLISHED e
+        para de imprimir esse template, mesmo tendo o pacote guardado.
+      security:
+        - adminToken: []
+      parameters:
+        - $ref: "#/components/parameters/TemplateId"
+      responses:
+        "200":
+          description: Despublicado (idempotente; despublicar o que não existe também é 200).
+
+  /api/coletor/devices:
+    post:
+      operationId: registerDevice
+      tags: [admin]
+      summary: >
+        Cadastra um coletor e devolve o pacote de provisionamento (token + chave pública + endereço).
+        O token aparece UMA vez. O servidor guarda só o SHA-256 dele. Entregue ao app pelo MDM ou
+        pela tela de administração com PIN. Nunca vai por e-mail ou chat, nem para o repositório.
+      security:
+        - adminToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+                  maxLength: 60
+                  example: "CF550 balcão 2"
+      responses:
+        "201":
+          description: Cadastrado.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeviceProvisioning"
+    get:
+      operationId: listDevices
+      tags: [admin]
+      security:
+        - adminToken: []
+      responses:
+        "200":
+          description: Coletores cadastrados (sem token).
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DeviceSummary"
+
+  /api/coletor/devices/{deviceId}:
+    delete:
+      operationId: revokeDevice
+      tags: [admin]
+      summary: Revoga o token do coletor. A chamada seguinte dele recebe 401.
+      security:
+        - adminToken: []
+      parameters:
+        - name: deviceId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Revogado (idempotente).
+
+  # ------------------------------------------------------------------ coletor (rede da loja)
+  /coletor/v1/labels:
+    get:
+      operationId: listLabels
+      tags: [coletor]
+      summary: Templates publicados que o coletor pode imprimir.
+      security:
+        - deviceToken: []
+      responses:
+        "200":
+          description: Lista (pode ser vazia).
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LabelSummary"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /coletor/v1/labels/{templateId}:
+    get:
+      operationId: getLabelPackage
+      tags: [coletor]
+      summary: >
+        Pacote atual do template. ETag = packageSha256. Com If-None-Match igual, responde 304 sem
+        corpo. Antes de guardar, o app confere SHA-256, assinatura e vetores de conformidade, nessa
+        ordem. Falhou qualquer um: descarta o pacote e mantém o anterior, que segue valendo só se a
+        versão dele ainda for a publicada.
+      security:
+        - deviceToken: []
+      parameters:
+        - $ref: "#/components/parameters/TemplateId"
+        - name: If-None-Match
+          in: header
+          required: false
+          schema: { type: string }
+      responses:
+        "200":
+          description: Pacote.
+          headers:
+            ETag: { schema: { type: string } }
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LabelPackageEnvelope"
+        "304":
+          description: O app já tem este pacote.
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotPublished"
+
+  /coletor/v1/labels/{templateId}/version:
+    get:
+      operationId: getLabelVersion
+      tags: [coletor]
+      summary: >
+        Conferência leve, feita pela ponte A CADA impressão deste template, venha o pedido da tela do
+        IMPRESSÃO A ou de outro app pela API local, antes de mandar qualquer byte para a impressora.
+        Regra (aceite do passo 6, "não imprime versão antiga sem avisar"):
+        - responde e packageSha256 igual ao guardado: imprime;
+        - responde com outro packageSha256: baixa o pacote novo, valida e só então imprime, avisando
+          "atualizado para vN";
+        - 404: não imprime ("template despublicado no PC");
+        - sem resposta em 3 s, erro de rede ou 5xx: NÃO imprime. Mensagem: "Sem conexão com o PC
+          das etiquetas: não dá para confirmar a versão. Nada foi impresso." Para app chamador:
+          ok=false, errorCode TEMPLATE_VERSION_UNCONFIRMED. Não há modo offline no v1 (ver
+          pendência P1 no plano).
+      security:
+        - deviceToken: []
+      parameters:
+        - $ref: "#/components/parameters/TemplateId"
+      responses:
+        "200":
+          description: Versão publicada agora.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [templateId, templateVersion, packageSha256]
+                properties:
+                  templateId: { type: string }
+                  templateVersion: { type: integer }
+                  packageSha256: { type: string, pattern: "^[0-9a-f]{64}$" }
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotPublished"
+
+  /coletor/v1/print-reports:
+    post:
+      operationId: reportPrint
+      tags: [coletor]
+      summary: >
+        Relatório do que o coletor mandou para a impressora, para a mesma trilha de auditoria da
+        impressão pelo PC (SHA-256 por etiqueta). Best-effort: o app guarda na fila local e reenvia
+        depois. Nunca bloqueia nem atrasa a impressão. Idempotente por reportId: reenviar o mesmo
+        relatório não duplica a auditoria. "SENT" quer dizer que a impressora aceitou os bytes, não
+        que a etiqueta saiu.
+      security:
+        - deviceToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PrintReport"
+      responses:
+        "200":
+          description: Registrado agora ou já registrado antes (mesmo reportId).
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [reportId, duplicate]
+                properties:
+                  reportId: { type: string }
+                  duplicate: { type: boolean }
+        "400":
+          description: Relatório inválido (sem etiquetas, hash fora do formato).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+components:
+  securitySchemes:
+    adminToken:
+      type: http
+      scheme: bearer
+      description: >
+        O token atual do print-server (arquivo token.txt no diretório de dados). Só aceito no
+        listener de loopback. Nunca vai ao coletor.
+    deviceToken:
+      type: http
+      scheme: bearer
+      description: >
+        Token por coletor, criado em POST /api/coletor/devices, só leitura de pacotes + relatório.
+        Revogável. Comparação em tempo constante contra o SHA-256 guardado.
+
+  parameters:
+    TemplateId:
+      name: templateId
+      in: path
+      required: true
+      schema: { type: string }
+
+  responses:
+    Unauthorized:
+      description: Token ausente, inválido ou revogado.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example: { errorCode: DEVICE_NOT_AUTHORIZED, message: "Coletor não autorizado" }
+    NotPublished:
+      description: Template não publicado (ou despublicado).
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example: { errorCode: LABEL_NOT_PUBLISHED, message: "Template não publicado para coletores" }
+
+  schemas:
+    PublishRequest:
+      type: object
+      required: [template, templateVersion, templateHash, targets, user]
+      properties:
+        template:
+          type: object
+          description: LabelTemplate do designer (engine/src/model/objects.ts), igual ao de POST /api/jobs.
+        templateVersion:
+          type: integer
+          minimum: 1
+          description: Versão gravada no designer (saveVersion). Sem versão gravada não publica.
+        templateHash:
+          type: string
+          pattern: "^[0-9a-f]{64}$"
+          description: SHA-256 do JSON canônico do template (engine/src/templates/versioning.ts). O servidor recalcula e recusa se não bater.
+        targets:
+          type: array
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/TargetId"
+        user:
+          type: string
+          maxLength: 120
+
+    TargetId:
+      type: object
+      required: [language, dpi]
+      properties:
+        language:
+          type: string
+          enum: [ZPL, TSPL]
+          description: EPL fica fora do v1 (o app não fala EPL).
+        dpi:
+          type: integer
+          enum: [203, 300, 600]
+
+    LabelSummary:
+      type: object
+      required: [templateId, name, templateVersion, templateHash, packageSha256, publishedAt, publishedBy, targets]
+      properties:
+        templateId: { type: string }
+        name: { type: string }
+        templateVersion: { type: integer }
+        templateHash: { type: string }
+        packageSha256: { type: string }
+        publishedAt: { type: string, format: date-time }
+        publishedBy: { type: string }
+        targets:
+          type: array
+          items:
+            $ref: "#/components/schemas/TargetId"
+
+    LabelPackageEnvelope:
+      type: object
+      description: >
+        packageJson é uma STRING com o pacote (LabelPackage) serializado. Hash e assinatura são
+        feitos sobre os bytes UTF-8 exatos dessa string. Assim o app não precisa reproduzir JSON
+        canônico em Kotlin. Ele confere os bytes e só depois faz o parse.
+      required: [packageJson, packageSha256, signature]
+      properties:
+        packageJson:
+          type: string
+        packageSha256:
+          type: string
+          pattern: "^[0-9a-f]{64}$"
+          description: SHA-256 (hex minúsculo) dos bytes UTF-8 de packageJson.
+        signature:
+          type: object
+          required: [alg, kid, value]
+          properties:
+            alg:
+              type: string
+              enum: [ES256]
+            kid:
+              type: string
+              description: Id da chave. O app só aceita o kid recebido no provisionamento.
+            value:
+              type: string
+              description: Assinatura ECDSA P-256/SHA-256 dos bytes UTF-8 de packageJson, DER em base64.
+
+    LabelPackage:
+      type: object
+      description: Conteúdo de packageJson.
+      required: [format, formatVersion, templateId, name, templateVersion, templateHash, widthMm, heightMm, compiler, compiledAt, fields, targets]
+      properties:
+        format:
+          type: string
+          enum: [athos-label-coletor]
+        formatVersion:
+          type: integer
+          enum: [1]
+          description: O app recusa formatVersion que não conhece ("atualize o app").
+        templateId: { type: string }
+        name: { type: string }
+        templateVersion: { type: integer }
+        templateHash:
+          type: string
+          description: O mesmo hash da auditoria do PC. O app só exibe e registra, não recalcula.
+        widthMm: { type: number }
+        heightMm: { type: number }
+        compiler:
+          type: string
+          example: "@athos-label/exporters 0.1.0"
+        compiledAt: { type: string, format: date-time }
+        fields:
+          type: array
+          description: Campos que o operador preenche (ou lê no scanner). Ordem = ordem na tela do app.
+          items:
+            $ref: "#/components/schemas/PackageField"
+        targets:
+          type: array
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/PackageTarget"
+
+    PackageField:
+      type: object
+      required: [name, label, required, maxLength, input]
+      properties:
+        name:
+          type: string
+          description: Nome da coluna no template ({{EAN}} → "EAN").
+        label:
+          type: string
+          description: Texto mostrado ao operador.
+        required: { type: boolean }
+        maxLength:
+          type: integer
+          description: Menor maxLength entre as lacunas que usam o campo, para avisar já na digitação.
+        input:
+          type: string
+          enum: [SCAN, KEYBOARD, ANY]
+          description: SCAN = o app foca o campo para o scanner do CF550.
+        sample:
+          type: string
+          description: Exemplo para a prévia. Nunca é impresso no lugar de um campo vazio.
+
+    PackageTarget:
+      type: object
+      description: >
+        Uma impressora-alvo (linguagem + DPI). Bytes de UMA etiqueta = concatenação de segments na
+        ordem. O lote repete isso por etiqueta. Escolha do alvo no app: language e dpi da impressora
+        cadastrada (Printer.language/dpi). Com language AUTO: TSPL para modelos TSC, ZPL para
+        GENERIC_ZPL. Sem alvo compatível: não imprime e diz qual alvo falta publicar.
+      required: [language, dpi, segments, slots, conformance]
+      properties:
+        language:
+          type: string
+          enum: [ZPL, TSPL]
+        dpi:
+          type: integer
+        segments:
+          type: array
+          items:
+            $ref: "#/components/schemas/Segment"
+        slots:
+          type: array
+          items:
+            $ref: "#/components/schemas/Slot"
+        conformance:
+          type: array
+          minItems: 2
+          description: >
+            Vetores gerados pelo compilador do PC. No recebimento, o app monta a etiqueta de cada
+            vetor e compara o SHA-256. Qualquer diferença: recusa o pacote ("app incompatível com
+            este pacote; nada foi impresso"). O compilador inclui pelo menos um vetor com acento e
+            um com os caracteres escapados da linguagem (ZPL ^ ~ _ \, TSPL ").
+          items:
+            $ref: "#/components/schemas/ConformanceVector"
+
+    Segment:
+      type: object
+      description: >
+        Exatamente UM destes: lit, slot ou copies.
+        lit: comandos prontos. ZPL: texto, vai como UTF-8. TSPL: cada caractere é um byte
+        (U+0000–U+00FF, ISO-8859-1 um para um, como o app já guarda TSPL na fila), já em CP1252;
+        pode conter BITMAP binário.
+        slot: id de uma lacuna de slots[].
+        copies: número de cópias da etiqueta, em decimal ASCII (ZPL ^PQn, TSPL PRINT 1,n). O
+        compilador põe o comando em volta como lit.
+      properties:
+        lit: { type: string }
+        slot: { type: string }
+        copies: { type: boolean, enum: [true] }
+
+    Slot:
+      type: object
+      description: >
+        Lacuna preenchida com o valor de UM campo. Ordem obrigatória no app:
+        (1) valor = texto do campo, sem trim. Controle (U+0000–U+001F, U+007F) → recusa.
+        (2) kind valida e transform normaliza (igual a engine/src/barcode/encode.ts normalize1D).
+        (3) maxLength conta caracteres do valor normalizado. Passou → recusa, nunca corta.
+        (4) escape da linguagem. ZPL: ^ ~ _ \ viram _XX hex maiúsculo (zplEscape) e o resto vai em
+        UTF-8. TSPL: converte para CP1252 e recusa caractere sem mapeamento (nunca troca por "?");
+        " vira \["] (tsplQuote, sem as aspas externas, que estão nos lit).
+        Campo vazio: obrigatório → recusa. Opcional → string vazia (só TEXT; código de barras vazio
+        sempre recusa).
+      required: [id, field, kind, maxLength]
+      properties:
+        id: { type: string }
+        field: { type: string }
+        kind:
+          type: string
+          enum: [TEXT, EAN13, EAN8, UPCA, CODE128, QR]
+          description: >
+            Só tipos com geometria que NÃO depende do valor. EAN/UPC: módulos fixos. QR: o tamanho
+            já é o do pior caso no designer. CODE128: largura de módulo congelada para maxLength
+            (valor mais curto sai mais estreito, alinhado à esquerda da caixa). TEXT: uma linha, sem
+            auto-fit.
+        transform:
+          type: string
+          enum: [NONE, GS1_DATA, GS1_FULL]
+          default: NONE
+          description: >
+            EAN13/EAN8/UPCA. GS1_DATA = sem dígito verificador, para a impressora calcular (ZPL ^BE).
+            GS1_FULL = com verificador, para o texto legível desenhado à parte. Valor com verificador
+            errado → recusa.
+        maxLength:
+          type: integer
+          minimum: 1
+          description: >
+            TEXT: calculado no PC com o glifo mais largo da fonte no tamanho da caixa (conservador).
+            QR: capacidade do símbolo no pior caso, em bytes UTF-8.
+
+    ConformanceVector:
+      type: object
+      required: [values, copies, bytesSha256]
+      properties:
+        values:
+          type: object
+          additionalProperties: { type: string }
+          description: Campo → valor.
+        copies: { type: integer, minimum: 1 }
+        bytesSha256:
+          type: string
+          pattern: "^[0-9a-f]{64}$"
+          description: SHA-256 dos bytes exatos de uma etiqueta para o socket.
+
+    PortabilityProblem:
+      type: object
+      description: Por que um objeto não vai ao coletor no v1. Objeto estático (sem {{...}}) nunca é problema, vira lit.
+      required: [objectId, objectName, reason]
+      properties:
+        objectId: { type: string }
+        objectName: { type: string }
+        reason:
+          type: string
+          enum:
+            - SEQUENCE          # SEQ(): o contador fica no PC; numerar no coletor fica para depois
+            - DATE_FUNCTION     # TODAY/NOW/DATEADD: relógio do coletor não é confiável sem NTP
+            - EXPRESSION        # IF, pipes, funções: o app não interpreta expressões
+            - TEXT_FIT          # auto-fit ou várias linhas: a geometria depende do valor
+            - ROTATION          # rotação que não é múltiplo de 90° em objeto dinâmico
+            - DYNAMIC_IMAGE     # imagem vinda de campo
+            - SYMBOLOGY         # DataMatrix, PDF417, ITF-14, GS1-128, Code 39 dinâmicos (v1 não)
+            - CHARSET           # literal que a linguagem do alvo não representa (ex.: TSPL fora de CP1252)
+
+    PrintReport:
+      type: object
+      required: [reportId, templateId, templateVersion, packageSha256, target, printer, status, labels, at]
+      properties:
+        reportId:
+          type: string
+          description: UUID v4 gerado no app, um por envio de lote.
+        templateId: { type: string }
+        templateVersion: { type: integer }
+        packageSha256: { type: string }
+        target:
+          $ref: "#/components/schemas/TargetId"
+        printer:
+          type: object
+          required: [name]
+          properties:
+            name: { type: string }
+            model: { type: string }
+        operator:
+          type: string
+          maxLength: 120
+          nullable: true
+        status:
+          type: string
+          enum: [SENT, FAILED]
+        errorMessage:
+          type: string
+          nullable: true
+        labels:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required: [bytesSha256]
+            properties:
+              bytesSha256: { type: string, pattern: "^[0-9a-f]{64}$" }
+        at: { type: string, format: date-time }
+
+    DeviceProvisioning:
+      type: object
+      description: >
+        Tudo que o app precisa para falar com o PC. Entregue uma vez, pelo MDM
+        (ProvisioningConfig) ou pela tela de administração com PIN.
+      required: [deviceId, token, serverUrl, signingKey]
+      properties:
+        deviceId: { type: string }
+        token:
+          type: string
+          description: Mostrado só nesta resposta.
+        serverUrl:
+          type: string
+          example: "http://10.10.40.10:7172"
+        signingKey:
+          type: object
+          required: [kid, publicKeyPem]
+          properties:
+            kid: { type: string }
+            publicKeyPem: { type: string }
+
+    DeviceSummary:
+      type: object
+      required: [deviceId, name, createdAt, revoked]
+      properties:
+        deviceId: { type: string }
+        name: { type: string }
+        createdAt: { type: string, format: date-time }
+        lastSeenAt: { type: string, format: date-time, nullable: true }
+        revoked: { type: boolean }
+
+    ErrorResponse:
+      type: object
+      description: Mesmo formato de openapi.yaml.
+      required: [errorCode, message]
+      properties:
+        errorCode:
+          type: string
+          enum: [TEMPLATE_NOT_PORTABLE, TEMPLATE_HASH_MISMATCH, INVALID_REQUEST, DEVICE_NOT_AUTHORIZED, LABEL_NOT_PUBLISHED]
+        message: { type: string }
+        extra:
+          type: object
+          additionalProperties: true
