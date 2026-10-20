@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Nome curto sob o ícone: "IMPRESSÃO A" quebrava em "IMPRESS / ÃO A" no launcher do CF550.
+     Dentro do app (tela de entrada, barra do topo) continua IMPRESSÃO A. -->
+<resources>
+    <string name="launcher_label">Impressão A</string>
+</resources>

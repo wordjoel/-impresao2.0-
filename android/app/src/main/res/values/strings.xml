@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">IMPRESSÃO A</string>
+    <!-- Nome sob o ícone no launcher. Igual ao app_name; o genérico usa um mais curto (cabe numa linha). -->
+    <string name="launcher_label">@string/app_name</string>
     <!-- Fase 2: nome do serviço em Configurações > Impressão e no diálogo "Imprimir" dos outros apps. -->
     <string name="print_service_label">A.print.Bridge</string>
     <!-- MDM Core: Administrador de Dispositivo corporativo para gestão do coletor. -->
