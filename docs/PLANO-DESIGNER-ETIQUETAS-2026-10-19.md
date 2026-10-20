@@ -120,7 +120,19 @@ Texto original do passo:
 - Testes: `engine/test/sequence.test.ts` (6) e `print-server/test/sequence.test.ts` (5, ponta a ponta com
   impressora TCP falsa conferindo os números nos bytes, retomada, concorrência, persistência ao religar).
   Suíte: **188 passando** (engine 140, exporters 34, print-server 14); `typecheck` e `build` sem erros.
-- Pendente: tela no designer para ver/ajustar o contador (hoje só pela API).
+- **Tela do contador — FEITA (2026-10-20, sem commit):** aba Imprimir → seção "Numeração (SEQ)",
+  só aparece se o template aberto usa `SEQ`. Mostra a posição atual (já com reinício diário, via
+  `nextSequenceStart` do engine, a mesma regra da reserva), o último dia de lote, a prévia do que a
+  próxima etiqueta imprime em cada objeto com `SEQ`, e ajusta posição e regra (`PUT /api/counters`).
+  Voltar o contador mostra quais posições serão repetidas e só salva com a caixa "Sei que vai repetir
+  números" marcada. A lista de jobs mostra a faixa `SEQ pos. X–Y` de cada job.
+- **Correção junto (print-server):** `next` manual agora grava o dia de hoje. Antes, num contador
+  `DAILY` cujo último lote era de outro dia, o ajuste era ignorado e a próxima reserva voltava a 0.
+  Teste novo em `print-server/test/sequence.test.ts`.
+- Suíte: **190 passando** (engine 141, exporters 34, print-server 15); `typecheck` e `build` sem erros.
+  Conferido no navegador (designer + print-server locais, sem impressora): ajuste 0→120 salvo com
+  prévia `000121`; volta 120→0 bloqueada até confirmar; seção some em template sem `SEQ`. O contador
+  de teste foi devolvido a 0.
 
 Texto original do passo:
 

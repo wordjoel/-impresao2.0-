@@ -139,4 +139,16 @@ describe('numeração contínua', () => {
     await waitFor(again.call, j.json.id, 'COMPLETED');
     expect(numbers(fake.text())).toEqual(['001000']);
   });
+
+  it('ajuste manual em contador DAILY de dia anterior vale hoje (não volta a 0)', async () => {
+    const fake = await fakePrinter();
+    const t = seqTemplate();
+    const dataDir = await fs.mkdtemp(path.join(os.tmpdir(), 'athos-seq-'));
+    await new FileStore(dataDir).saveCounters({ [t.id]: { next: 50, reset: 'DAILY', day: '2000-01-01' } });
+    const { call } = await startServer({}, dataDir);
+    await call('PUT', '/api/printers', [printer(fake.port)]);
+    await call('PUT', `/api/counters/${t.id}`, { next: 10, reset: 'DAILY' });
+    const j = await call('POST', '/api/jobs', job(t, 2));
+    expect(j.json.seqRange).toEqual({ first: 10, last: 11 });
+  });
 });

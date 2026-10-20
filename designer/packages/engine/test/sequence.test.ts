@@ -4,6 +4,7 @@ import {
   createTemplate,
   createTextObject,
   newSequenceCounter,
+  nextSequenceStart,
   reserveSequence,
   resolveLabel,
   usesSequence,
@@ -28,6 +29,14 @@ describe('reserva de faixa', () => {
     const b = reserveSequence(a.counter, 5, dia('2026-10-19'));
     const c = reserveSequence(b.counter, 7, dia('2026-10-20'));
     expect([a.start, b.start, c.start, c.counter.next, c.counter.day]).toEqual([0, 10, 0, 7, '2026-10-20']);
+  });
+
+  it('nextSequenceStart: mostra o início da próxima reserva sem reservar', () => {
+    const c = reserveSequence(newSequenceCounter('DAILY', dia('2026-10-19')), 10, dia('2026-10-19')).counter;
+    expect(nextSequenceStart(c, dia('2026-10-19'))).toBe(10);
+    expect(nextSequenceStart(c, dia('2026-10-20'))).toBe(0);
+    expect(nextSequenceStart({ ...c, reset: 'NEVER' }, dia('2026-10-20'))).toBe(10);
+    expect(c.next).toBe(10);
   });
 
   it('recusa reserva vazia ou fracionada', () => {

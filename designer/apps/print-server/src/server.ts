@@ -291,7 +291,13 @@ export async function createPrintServer(opts: ServerOptions): Promise<http.Serve
       if (reset !== undefined && reset !== 'NEVER' && reset !== 'DAILY') throw new HttpError(400, 'reset precisa ser NEVER ou DAILY');
       return withCounters((all) => {
         const cur = all[b] ?? newSequenceCounter();
-        all[b] = { ...cur, ...(next !== undefined ? { next: next as number } : {}), ...(reset !== undefined ? { reset: reset as SequenceReset } : {}) };
+        // `next` manual vale para hoje: sem atualizar o dia, um contador DAILY de dia anterior
+        // ignoraria o ajuste e recomeçaria em 0 na próxima reserva.
+        all[b] = {
+          ...cur,
+          ...(next !== undefined ? { next: next as number, day: newSequenceCounter().day } : {}),
+          ...(reset !== undefined ? { reset: reset as SequenceReset } : {}),
+        };
         log(`contador ${b}: ${JSON.stringify(all[b])}`);
         return { value: all[b], save: true };
       });

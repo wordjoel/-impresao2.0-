@@ -1,7 +1,10 @@
-import type { AuditEntry, DataRow, LabelTemplate, PrinterProfile, PrinterStatus, Routing } from '@athos-label/engine';
+import type { AuditEntry, DataRow, LabelTemplate, PrinterProfile, PrinterStatus, Routing, SequenceCounter, SequenceReset } from '@athos-label/engine';
 
 export interface JobSummary {
   id: string;
+  templateId: string;
+  /** Faixa de posições SEQ reservada para o job; null se o template não numera. */
+  seqRange: { first: number; last: number } | null;
   status: 'QUEUED' | 'RUNNING' | 'PAUSED' | 'COMPLETED' | 'CANCELLED';
   sentLabels: number;
   totalLabels: number;
@@ -70,6 +73,12 @@ export class PrintClient {
   }
   cancel(id: string) {
     return this.call<{ ok: boolean }>('POST', `/api/jobs/${id}/cancel`);
+  }
+  counters() {
+    return this.call<Record<string, SequenceCounter>>('GET', '/api/counters');
+  }
+  setCounter(templateId: string, change: { next?: number; reset?: SequenceReset }) {
+    return this.call<SequenceCounter>('PUT', `/api/counters/${encodeURIComponent(templateId)}`, change);
   }
   audit(jobId: string) {
     return this.call<AuditEntry[]>('GET', `/api/audit?jobId=${encodeURIComponent(jobId)}`);

@@ -172,9 +172,13 @@ export function newSequenceCounter(reset: SequenceReset = 'NEVER', now = new Dat
  */
 export function reserveSequence(counter: SequenceCounter, count: number, now = new Date()): { start: number; counter: SequenceCounter } {
   if (!Number.isInteger(count) || count < 1) throw new RangeError('Reserva precisa de pelo menos 1 posição');
-  const today = localDay(now);
-  const base = counter.reset === 'DAILY' && counter.day !== today ? 0 : counter.next;
-  return { start: base, counter: { ...counter, next: base + count, day: today } };
+  const base = nextSequenceStart(counter, now);
+  return { start: base, counter: { ...counter, next: base + count, day: localDay(now) } };
+}
+
+/** Posição que a PRÓXIMA reserva receberia agora (já com o reinício diário), sem reservar. */
+export function nextSequenceStart(counter: SequenceCounter, now = new Date()): number {
+  return counter.reset === 'DAILY' && counter.day !== localDay(now) ? 0 : counter.next;
 }
 
 /** O template usa SEQ(...) em algum objeto visível? Só esses consomem numeração. */

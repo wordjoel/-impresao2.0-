@@ -1,5 +1,18 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { createId, validateBatch, type AuditEntry, type PrinterProfile, type PrinterStatus, type RoutingRule, type ValidationReport } from '@athos-label/engine';
+import {
+  createId,
+  nextSequenceStart,
+  resolveLabel,
+  usesSequence,
+  validateBatch,
+  type AuditEntry,
+  type PrinterProfile,
+  type PrinterStatus,
+  type RoutingRule,
+  type SequenceCounter,
+  type SequenceReset,
+  type ValidationReport,
+} from '@athos-label/engine';
 import { useDesigner, useRows } from '../store';
 import { PrintClient, type JobSummary } from '../lib/print-client';
 import { appMeasurer } from '../lib/measure';
@@ -21,6 +34,109 @@ const JOB_TEXT: Record<JobSummary['status'], string> = {
   COMPLETED: 'enviado',
   CANCELLED: 'cancelado',
 };
+
+/**
+ * Contador SEQ do template aberto, guardado no print-server (passo 4). Mostra o que a próxima
+ * etiqueta vai imprimir e permite ajustar posição e regra de reinício. Voltar o contador repete
+ * números já impressos: exige confirmação explícita.
+ */
+function CounterSection(props: { client: PrintClient; onError(msg: string | null): void }) {
+  const template = useDesigner((s) => s.template);
+  const brand = useDesigner((s) => s.brand);
+  const rows = useRows();
+  // undefined = carregando; null = ainda sem contador (o primeiro job cria, começando em 0).
+  const [counter, setCounter] = useState<SequenceCounter | null | undefined>(undefined);
+  const [next, setNext] = useState(0);
+  const [reset, setReset] = useState<SequenceReset>('NEVER');
+  const [allowBack, setAllowBack] = useState(false);
+  const { client, onError } = props;
+
+  const reload = useCallback(async () => {
+    try {
+      const c = (await client.counters())[template.id] ?? null;
+      setCounter(c);
+      setNext(c ? nextSequenceStart(c) : 0);
+      setReset(c?.reset ?? 'NEVER');
+      setAllowBack(false);
+    } catch (e) {
+      onError((e as Error).message);
+    }
+  }, [client, template.id, onError]);
+
+  useEffect(() => {
+    void reload();
+  }, [reload]);
+
+  const current = counter ? nextSequenceStart(counter) : 0;
+  const goesBack = next < current;
+  const changed = counter === null ? next !== 0 || reset !== 'NEVER' : !!counter && (next !== current || reset !== counter.reset);
+
+  // O que a primeira etiqueta do próximo job imprimiria, objeto por objeto com SEQ.
+  const preview = useMemo(() => {
+    const seqObjects = template.objects.filter((o) => o.visible && 'content' in o && typeof o.content === 'string' && /\bSEQ\s*\(/i.test(o.content));
+    const label = resolveLabel(template, rows[0] ?? {}, { index: 0, seqOffset: next, brand, measurer: appMeasurer, barcodeDetail: 'size' });
+    return seqObjects.map((o) => {
+      const el = label.elements.find((e) => e.id === o.id);
+      const value =
+        !el ? '—' : el.kind === 'text' ? el.text : el.kind === 'barcode1d' ? el.humanText || el.printerData : el.kind === 'barcode2d' ? el.data : el.kind === 'error' ? el.message : '—';
+      return { name: o.name, value };
+    });
+  }, [template, rows, brand, next]);
+
+  const saveCounter = async () => {
+    try {
+      onError(null);
+      await client.setCounter(template.id, { next, reset });
+      await reload();
+    } catch (e) {
+      onError((e as Error).message);
+    }
+  };
+
+  return (
+    <Section title="Numeração (SEQ)" actions={<button className="link" onClick={() => void reload()}>atualizar</button>}>
+      {counter === undefined ? (
+        <p className="muted">Lendo contador…</p>
+      ) : (
+        <>
+          <p className="muted">
+            {counter === null
+              ? 'Este template ainda não imprimiu com numeração: o primeiro job começa na posição 0.'
+              : `Último lote em ${counter.day}. ${counter.reset === 'DAILY' ? 'Recomeça em 0 no primeiro lote de cada dia.' : 'Nunca recomeça sozinho.'}`}
+          </p>
+          <div className="grid2">
+            <Num label="Próxima posição" min={0} value={next} onCommit={(v) => setNext(Math.floor(v))} hint={`Atual: ${current}`} />
+            <Select<SequenceReset>
+              label="Reinício"
+              value={reset}
+              options={[
+                ['NEVER', 'Nunca'],
+                ['DAILY', 'Todo dia'],
+              ]}
+              onChange={setReset}
+            />
+          </div>
+          <ul className="muted">
+            {preview.map((p) => (
+              <li key={p.name}>
+                Próxima etiqueta — {p.name}: <code>{p.value}</code>
+              </li>
+            ))}
+          </ul>
+          {goesBack && (
+            <>
+              <Notice kind="warn">Voltar de {current} para {next} imprime de novo números que já saíram (posições {next}–{current - 1}).</Notice>
+              <Check label="Sei que vai repetir números" checked={allowBack} onChange={setAllowBack} />
+            </>
+          )}
+          <button className="primary" disabled={!changed || (goesBack && !allowBack)} onClick={() => void saveCounter()}>
+            Salvar contador
+          </button>
+        </>
+      )}
+    </Section>
+  );
+}
 
 /** Impressão em lote pelo print-server local: impressoras, roteamento, jobs e auditoria. */
 export function PrintPanel() {
@@ -217,6 +333,8 @@ export function PrintPanel() {
             {printers.length > 0 && <Select label="Padrão" value={defaultPrinter} options={printerOptions} onChange={(v) => setDefaultPrinter(String(v))} />}
           </Section>
 
+          {usesSequence(template) && <CounterSection client={client} onError={setError} />}
+
           <Section title={`Imprimir "${template.name}"`}>
             <div className="grid2">
               <Num label="Cópias por etiqueta" min={1} max={999} value={copies} onCommit={setCopies} />
@@ -245,6 +363,7 @@ export function PrintPanel() {
                     <strong>{JOB_TEXT[j.status]}</strong>
                     <span>
                       {j.sentLabels}/{j.totalLabels} · v{j.templateVersion} · {j.user} · {new Date(j.createdAt).toLocaleTimeString('pt-BR')}
+                      {j.seqRange && ` · SEQ pos. ${j.seqRange.first}–${j.seqRange.last}`}
                     </span>
                   </div>
                   <div className="progress">
