@@ -49,6 +49,8 @@ object BrandPresets {
         logoResource = R.drawable.ic_brand_mark,
         splashLogoResource = R.drawable.ic_brand_mark,
         launcherIconProfile = "atos_print_bridge",
+        // Subtítulo da barra da tela inicial (abaixo do logotipo); o padrão de BrandConfig é "Print Bridge".
+        subBrandName = "IMPRESSÃO A",
         footerEnabled = true,
         footerText = "Powered by ATHOS Tecnologia",
         supportName = "ATHOS Tecnologia",

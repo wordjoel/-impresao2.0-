@@ -27,3 +27,11 @@ Print Bridge" em Sobre, título da página de teste e cabeçalho do pacote de "E
 - Suíte do designer: 151 testes, 0 falhas; `typecheck` sem erros.
 
 **Pendente:** imprimir na TSC MB241 e ler cada código com o scanner do CF550 (passo 1 do plano).
+
+## Atualização 22:10 — título da tela inicial
+
+`subBrandName` da marca genérica = "IMPRESSÃO A" (antes: padrão "Print Bridge" de `BrandConfig`).
+APK `165AC611…cf55`, instalado no CF550 (dados mantidos: primeira instalação continua 04/10).
+Barra da tela inicial mostra **IMPRESSÃO A** abaixo do logotipo: `07-home-titulo.png`.
+Testes `testGenericoDebugUnitTest`: 376, 0 falhas, 1 ignorado.
+Continua pendente: nome no launcher quebra em "IMPRESS / ÃO A" (decisão do responsável).
