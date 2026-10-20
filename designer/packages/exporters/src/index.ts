@@ -6,3 +6,4 @@ export * from './epl';
 export * from './compile';
 export * from './svg';
 export * from './pdf';
+export * from './coletor';

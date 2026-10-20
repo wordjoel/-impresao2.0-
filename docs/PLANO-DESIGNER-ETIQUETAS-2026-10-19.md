@@ -207,8 +207,24 @@ Texto original das pendências, mantido para histórico:
 - **P4. Numeração (`SEQ`) no coletor:** fora do v1. Se precisar, o contador do PC teria que reservar faixa
   pela rede (rota nova).
 
-Próximo, depois das pendências: compilador de pacote + rotas no print-server (TypeScript, com testes
-contra os vetores), depois o lado Android.
+**6a. Compilador de pacote — FEITO (2026-10-20, sem commit).** `designer/packages/exporters/src/coletor.ts`:
+- `compileColetorPackage` analisa o template (motivos do contrato + `BARCODE_SIZE`), gera cada objeto
+  dinâmico pelos MESMOS geradores ZPL/TSPL do PC com marcadores no lugar dos valores e corta neles. Objeto
+  estático vira comando pronto. Recusa com a lista completa (`NotPortableError`), pedido inválido com
+  `PackageInputError` (alvo repetido, DPI, versão, `templateHash` que não confere).
+- `fillSlot`/`assembleLabel` são a referência do que o app faz (o Kotlin repete). Cada vetor de conformidade
+  é montado pelo pacote E pelo caminho do PC (resolver + gerador); se divergirem, o compilador recusa.
+- Decisões tomadas no código e levadas ao contrato: todo campo obrigatório no v1 (linha vazia some do comando
+  no gerador); ZPL leva `^PQ` mesmo com 1 cópia; cópias 1–9999; Code 128 com módulo pelo pior caso do
+  tamanho do exemplo e sem 180°/270°; QR pode ter texto fixo (URL + campo); TSPL recusa valor que começa
+  com acento solto; `samples` opcional no pedido de publicação.
+- Testes: `exporters/test/coletor.test.ts` (11): bytes idênticos à impressão pelo PC (ZPL e TSPL; ZPL com
+  1 cópia difere só no `^PQ1`), vetores, determinismo, módulo congelado do Code 128, todos os motivos de
+  recusa, CHARSET só no alvo TSPL, validação e escape das lacunas, cópias. Suíte: **201 passando**
+  (engine 141, exporters 45, print-server 15); typecheck sem erros.
+
+Próximo (6b): rotas no print-server (publicar, listar, despublicar, aparelhos, listener da LAN na 7172,
+assinatura ES256 com chave guardada fora do repositório), depois o lado Android.
 
 ## 5. Hifenização em português — FEITO (2026-10-19, sem commit)
 

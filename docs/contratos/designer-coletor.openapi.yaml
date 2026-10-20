@@ -385,6 +385,13 @@ components:
         user:
           type: string
           maxLength: 120
+        samples:
+          type: object
+          additionalProperties: { type: string }
+          description: >
+            Opcional. Valores de exemplo (linha da prévia do designer), campo → valor. Viram
+            PackageField.sample e o 1º vetor de conformidade, e definem o módulo do Code 128 e do
+            QR (ver Slot.kind). Exemplo inválido para o tipo é ignorado (usa o padrão do compilador).
 
     TargetId:
       type: object
@@ -490,7 +497,9 @@ components:
         required: { type: boolean }
         maxLength:
           type: integer
-          description: Menor maxLength entre as lacunas que usam o campo, para avisar já na digitação.
+          description: >
+            Menor maxLength entre as lacunas que usam o campo, para avisar já na digitação. Lacuna
+            EAN-13/EAN-8/UPC-A conta 13/8/12 aqui (o operador pode digitar com o verificador).
         input:
           type: string
           enum: [SCAN, KEYBOARD, ANY]
@@ -540,8 +549,11 @@ components:
         (U+0000–U+00FF, ISO-8859-1 um para um, como o app já guarda TSPL na fila), já em CP1252;
         pode conter BITMAP binário.
         slot: id de uma lacuna de slots[].
-        copies: número de cópias da etiqueta, em decimal ASCII (ZPL ^PQn, TSPL PRINT 1,n). O
-        compilador põe o comando em volta como lit.
+        copies: número de cópias da etiqueta (1 a 9999), em decimal ASCII (ZPL ^PQn, TSPL PRINT
+        1,n). O compilador põe o comando em volta como lit. ZPL leva ^PQ mesmo com 1 cópia (o
+        gerador do PC omite ^PQ1; na impressora o efeito é o mesmo). Com 2+ cópias, e sempre em
+        TSPL, os bytes são idênticos aos da impressão pelo PC (teste em
+        designer/packages/exporters/test/coletor.test.ts).
       properties:
         lit: { type: string }
         slot: { type: string }
@@ -550,15 +562,23 @@ components:
     Slot:
       type: object
       description: >
-        Lacuna preenchida com o valor de UM campo. Ordem obrigatória no app:
-        (1) valor = texto do campo, sem trim. Controle (U+0000–U+001F, U+007F) → recusa.
-        (2) kind valida e transform normaliza (igual a engine/src/barcode/encode.ts normalize1D).
-        (3) maxLength conta caracteres do valor normalizado. Passou → recusa, nunca corta.
+        Lacuna preenchida com o valor de UM campo. Referência executável do algoritmo:
+        fillSlot/assembleLabel em designer/packages/exporters/src/coletor.ts (o Kotlin repete).
+        Ordem obrigatória no app:
+        (0) o campo é buscado pelo nome EXATO (variables[field]).
+        (1) valor = texto do campo, sem trim. Ausente ou vazio → MISSING_VARIABLES (no v1 todo
+        campo é obrigatório: linha vazia some do comando no gerador e mudaria a etiqueta).
+        Controle (U+0000–U+001F, U+007F) → recusa.
+        (2) kind valida e transform normaliza (igual a engine/src/barcode/encode.ts normalize1D,
+        que apara espaços em EAN/UPC/Code 128). TEXT e QR vão como digitados.
+        (3) maxLength: QR conta bytes UTF-8; os demais contam pontos de código (TSPL depois de
+        NFC). Passou → recusa, nunca corta.
         (4) escape da linguagem. ZPL: ^ ~ _ \ viram _XX hex maiúsculo (zplEscape) e o resto vai em
-        UTF-8. TSPL: converte para CP1252 e recusa caractere sem mapeamento (nunca troca por "?");
-        " vira \["] (tsplQuote, sem as aspas externas, que estão nos lit).
-        Campo vazio: obrigatório → recusa. Opcional → string vazia (só TEXT; código de barras vazio
-        sempre recusa).
+        UTF-8, sem normalizar. TSPL: recusa valor que começa com acento solto (U+0300…, se juntaria
+        ao texto fixo no NFC), normaliza NFC, converte para CP1252 e recusa caractere sem
+        mapeamento (nunca troca por "?"); " vira \["] (tsplQuote, sem as aspas externas, que
+        estão nos lit).
+        Qualquer recusa → INVALID_VARIABLE_VALUE com o campo e o motivo.
       required: [id, field, kind, maxLength]
       properties:
         id: { type: string }
@@ -567,10 +587,14 @@ components:
           type: string
           enum: [TEXT, EAN13, EAN8, UPCA, CODE128, QR]
           description: >
-            Só tipos com geometria que NÃO depende do valor. EAN/UPC: módulos fixos. QR: o tamanho
-            já é o do pior caso no designer. CODE128: largura de módulo congelada para maxLength
-            (valor mais curto sai mais estreito, alinhado à esquerda da caixa). TEXT: uma linha, sem
-            auto-fit.
+            Só tipos com geometria que NÃO depende do valor. EAN/UPC: módulos fixos. QR: módulo
+            do exemplo, símbolo reservado para o maior dado que cabe na caixa com esse módulo; pode
+            ter texto fixo junto (ex.: URL + campo). CODE128: módulo congelado pelo pior caso
+            (conjunto B, 35 + 11 × caracteres) para o tamanho do exemplo; valor mais curto sai mais
+            estreito, alinhado à esquerda; girado 180°/270° é recusado (a posição dependeria da
+            largura). EAN/UPC/CODE128 dinâmicos só com o campo sozinho, sem texto fixo. TEXT: fit
+            NONE (uma linha, sem auto-fit), pode ter texto fixo e vários campos; o espaço livre é
+            dividido igualmente entre eles.
         transform:
           type: string
           enum: [NONE, GS1_DATA, GS1_FULL]
@@ -618,6 +642,7 @@ components:
             - DYNAMIC_IMAGE     # imagem vinda de campo
             - SYMBOLOGY         # DataMatrix, PDF417, ITF-14, GS1-128, Code 39 dinâmicos (v1 não)
             - CHARSET           # literal que a linguagem do alvo não representa (ex.: TSPL fora de CP1252)
+            - BARCODE_SIZE      # código dinâmico não cabe na caixa nem com módulo de 1 dot
 
     PrintReport:
       type: object
