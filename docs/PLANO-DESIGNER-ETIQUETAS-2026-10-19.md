@@ -223,8 +223,29 @@ Texto original das pendências, mantido para histórico:
   recusa, CHARSET só no alvo TSPL, validação e escape das lacunas, cópias. Suíte: **201 passando**
   (engine 141, exporters 45, print-server 15); typecheck sem erros.
 
-Próximo (6b): rotas no print-server (publicar, listar, despublicar, aparelhos, listener da LAN na 7172,
-assinatura ES256 com chave guardada fora do repositório), depois o lado Android.
+**6b. Rotas no print-server — FEITO (2026-10-20, sem commit).**
+- `apps/print-server/src/coletor.ts` (`ColetorService`): publicar (compila com o 6a, assina ES256, grava),
+  listar, despublicar, cadastrar/listar/revogar coletor, autenticar token de coletor, pacote, versão e
+  relatório. Um serviço para os dois listeners, com gravações em fila.
+- Tudo no diretório de dados (`%LOCALAPPDATA%\athos-label\print-server\coletor\`), fora do repositório:
+  `signing-key.pem` (chave privada P-256 gerada no primeiro uso, nunca sai do PC), `published/<id>.json`,
+  `devices.json` (só o SHA-256 do token), `reports.jsonl`.
+- `server.ts`: rotas `/api/coletor/*` no listener de loopback (token do PC) e `createColetorLanServer`, que
+  só atende `/coletor/v1/*` com token de coletor (nem `/api/health`), sem CORS. ETag/304 no pacote.
+- `main.ts`: listener da loja **desligado por padrão**; liga com `COLETOR_LISTEN=<ip>:7172`
+  (`COLETOR_URL` obrigatório se escutar em 0.0.0.0). Sem ele, cadastrar coletor responde 409.
+- O token do coletor só aparece na resposta do cadastro (`Cache-Control: no-store`); o log registra o
+  `deviceId`, nunca o token.
+- Testes: `print-server/test/coletor.test.ts` (6): publica → baixa → confere SHA-256, assinatura (e recusa
+  pacote adulterado) e vetores → monta; 304; nova versão; despublicar; recusas 422/400; separação dos
+  listeners e dos tokens; revogação; 409 sem listener; relatório idempotente e validado; chave persiste
+  entre reinícios. Suíte: **207 passando** (engine 141, exporters 45, print-server 21); typecheck sem erros.
+  Subida real com `COLETOR_LISTEN=127.0.0.1:7182` em diretório temporário: os dois listeners sobem, LAN sem
+  token → 401, `/api` na LAN → 404.
+
+Próximo (6c): lado Android — guardar o provisionamento (MDM / tela com PIN), baixar e validar pacotes
+(SHA-256, assinatura, vetores), conferência de versão com a janela de 15 min, template da ponte via
+`printJob(TEMPLATE)` e fila de relatórios. Depois: botão "Publicar no coletor" no designer.
 
 ## 5. Hifenização em português — FEITO (2026-10-19, sem commit)
 

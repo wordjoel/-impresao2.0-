@@ -24,7 +24,7 @@ export class FileStore {
 
   private seq = 0;
 
-  private async writeAtomic(file: string, data: string): Promise<void> {
+  async writeAtomic(file: string, data: string): Promise<void> {
     const tmp = `${file}.${process.pid}.${++this.seq}.tmp`;
     await fs.writeFile(tmp, data, 'utf8');
     // No Windows, rename por cima de um arquivo que alguém está lendo falha com EPERM/EBUSY

@@ -161,6 +161,14 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/DeviceProvisioning"
+        "409":
+          description: >
+            Listener do coletor desligado (sem COLETOR_LISTEN/COLETOR_URL no print-server): não há
+            endereço para pôr no provisionamento. errorCode INVALID_REQUEST.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
     get:
       operationId: listDevices
       tags: [admin]
@@ -290,8 +298,10 @@ paths:
       operationId: reportPrint
       tags: [coletor]
       summary: >
-        Relatório do que o coletor mandou para a impressora, para a mesma trilha de auditoria da
-        impressão pelo PC (SHA-256 por etiqueta). Best-effort: o app guarda na fila local e reenvia
+        Relatório do que o coletor mandou para a impressora, com SHA-256 por etiqueta como a
+        auditoria da impressão pelo PC. Gravado em coletor/reports.jsonl no diretório de dados
+        (append-only, só os campos deste contrato, mais deviceId/deviceName/receivedAt), separado do
+        audit.jsonl dos jobs do PC, que é por job e por linha de dados. Best-effort: o app guarda na fila local e reenvia
         depois. Nunca bloqueia nem atrasa a impressão. Idempotente por reportId: reenviar o mesmo
         relatório não duplica a auditoria. "SENT" quer dizer que a impressora aceitou os bytes, não
         que a etiqueta saiu.
@@ -721,7 +731,9 @@ components:
 
     ErrorResponse:
       type: object
-      description: Mesmo formato de openapi.yaml.
+      description: >
+        Mesmo formato de openapi.yaml. O print-server também repete a mensagem em "error" (formato
+        antigo das rotas /api do designer).
       required: [errorCode, message]
       properties:
         errorCode:

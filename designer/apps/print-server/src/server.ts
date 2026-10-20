@@ -19,6 +19,7 @@ import {
   type Routing,
 } from '@athos-label/engine';
 import { compileLabel, type CompiledLabel } from '@athos-label/exporters';
+import { ColetorError, ColetorService, type PublishRequest } from './coletor';
 import { FileStore, type JobRecord } from './store';
 import { printerStatus, sendTcp } from './transport';
 
@@ -36,6 +37,8 @@ export interface ServerOptions {
   send?: (p: PrinterProfile, payload: Uint8Array) => Promise<void>;
   status?: (p: PrinterProfile) => Promise<PrinterStatus>;
   log?: (msg: string) => void;
+  /** Publicação para coletores (passo 6). O mesmo serviço atende o listener da rede da loja. */
+  coletor?: ColetorService;
 }
 
 interface JobRequest {
@@ -58,12 +61,55 @@ class HttpError extends Error {
   }
 }
 
+/** Resposta com status ou cabeçalhos diferentes do 200 JSON padrão. */
+class Reply {
+  constructor(
+    readonly status: number,
+    readonly body: unknown,
+    readonly headers: Record<string, string> = {},
+  ) {}
+}
+
 const MAX_BODY = 50 * 1024 * 1024;
+
+async function readBody<T>(req: http.IncomingMessage, max = MAX_BODY): Promise<T> {
+  const chunks: Buffer[] = [];
+  let size = 0;
+  for await (const c of req) {
+    size += (c as Buffer).length;
+    if (size > max) throw new HttpError(413, `Corpo maior que ${Math.round(max / 1024 / 1024)} MB`);
+    chunks.push(c as Buffer);
+  }
+  try {
+    return JSON.parse(Buffer.concat(chunks).toString('utf8')) as T;
+  } catch {
+    throw new HttpError(400, 'JSON inválido');
+  }
+}
+
+/** Grava a resposta. Erro do coletor sai no formato do contrato ({errorCode, message, extra}). */
+function respond(res: http.ServerResponse, result: unknown, log: (m: string) => void, e?: unknown) {
+  const json = { 'Content-Type': 'application/json; charset=utf-8' };
+  if (e === undefined) {
+    if (result instanceof Reply) {
+      res.writeHead(result.status, { ...(result.body === undefined ? {} : json), ...result.headers }).end(result.body === undefined ? undefined : JSON.stringify(result.body));
+    } else res.writeHead(200, json).end(JSON.stringify(result));
+    return;
+  }
+  if (e instanceof ColetorError) {
+    res.writeHead(e.status, json).end(JSON.stringify({ error: e.message, errorCode: e.errorCode, message: e.message, ...(e.extra ? { extra: e.extra } : {}) }));
+    return;
+  }
+  const status = e instanceof HttpError ? e.status : 500;
+  if (status === 500) log(`erro: ${(e as Error).stack ?? e}`);
+  res.writeHead(status, json).end(JSON.stringify({ error: status === 500 ? 'Erro interno' : (e as Error).message }));
+}
 
 export async function createPrintServer(opts: ServerOptions): Promise<http.Server> {
   const { store } = opts;
   const log = opts.log ?? (() => {});
   await store.init();
+  const coletor = opts.coletor ?? new ColetorService(store);
 
   // Job que estava RODANDO quando o processo caiu: volta pausado, para o operador retomar
   // conscientemente (do checkpoint) em vez de reimprimir sozinho ao religar.
@@ -176,20 +222,7 @@ export async function createPrintServer(opts: ServerOptions): Promise<http.Serve
     return given.length === tokenBuf.length && timingSafeEqual(given, tokenBuf);
   };
 
-  async function body<T>(req: http.IncomingMessage): Promise<T> {
-    const chunks: Buffer[] = [];
-    let size = 0;
-    for await (const c of req) {
-      size += (c as Buffer).length;
-      if (size > MAX_BODY) throw new HttpError(413, 'Corpo maior que 50 MB');
-      chunks.push(c as Buffer);
-    }
-    try {
-      return JSON.parse(Buffer.concat(chunks).toString('utf8')) as T;
-    } catch {
-      throw new HttpError(400, 'JSON inválido');
-    }
-  }
+  const body = <T>(req: http.IncomingMessage) => readBody<T>(req);
 
   async function route(req: http.IncomingMessage, url: URL): Promise<unknown> {
     const m = req.method ?? 'GET';
@@ -303,6 +336,34 @@ export async function createPrintServer(opts: ServerOptions): Promise<http.Serve
       });
     }
     if (a === 'audit' && m === 'GET') return store.audit(url.searchParams.get('jobId') ?? undefined);
+
+    // Coletor (passo 6): administração só aqui, no listener de loopback com o token do PC.
+    if (a === 'coletor') {
+      const d = parts[4];
+      if (b === 'publish' && !c && m === 'POST') {
+        const summary = await coletor.publish(await body<PublishRequest>(req));
+        log(`coletor: publicado ${summary.templateId} v${summary.templateVersion} (${summary.packageSha256.slice(0, 12)})`);
+        return new Reply(201, summary);
+      }
+      if (b === 'published' && !c && m === 'GET') return coletor.listPublished();
+      if (b === 'published' && c && !d && m === 'DELETE') {
+        await coletor.unpublish(c);
+        log(`coletor: despublicado ${c}`);
+        return { ok: true };
+      }
+      if (b === 'devices' && !c && m === 'POST') {
+        const p = await body<{ name?: unknown }>(req);
+        const prov = await coletor.registerDevice(p?.name);
+        log(`coletor: cadastrado ${prov.deviceId}`); // nunca o token
+        return new Reply(201, prov, { 'Cache-Control': 'no-store' });
+      }
+      if (b === 'devices' && !c && m === 'GET') return coletor.listDevices();
+      if (b === 'devices' && c && !d && m === 'DELETE') {
+        await coletor.revokeDevice(c);
+        log(`coletor: revogado ${c}`);
+        return { ok: true };
+      }
+    }
     throw new HttpError(404, 'Rota não encontrada');
   }
 
@@ -312,21 +373,57 @@ export async function createPrintServer(opts: ServerOptions): Promise<http.Serve
       res.setHeader('Access-Control-Allow-Origin', origin);
       res.setHeader('Vary', 'Origin');
       res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type');
-      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, OPTIONS');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
     }
     if (req.method === 'OPTIONS') {
       res.writeHead(origin && opts.allowedOrigins.includes(origin) ? 204 : 403).end();
       return;
     }
     try {
-      const result = await route(req, new URL(req.url ?? '/', 'http://127.0.0.1'));
-      res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' }).end(JSON.stringify(result));
+      respond(res, await route(req, new URL(req.url ?? '/', 'http://127.0.0.1')), log);
     } catch (e) {
-      const status = e instanceof HttpError ? e.status : 500;
-      if (status === 500) log(`erro: ${(e as Error).stack ?? e}`);
-      res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8' }).end(
-        JSON.stringify({ error: status === 500 ? 'Erro interno' : (e as Error).message }),
-      );
+      respond(res, undefined, log, e);
+    }
+  });
+}
+
+/**
+ * Listener da rede da loja (passo 6): SÓ as rotas /coletor/v1/*, com token por coletor. Nunca
+ * atende /api (administração), nem com o token do PC. Sem CORS: quem chama é o app, não página web.
+ */
+export function createColetorLanServer(opts: { coletor: ColetorService; log?: (msg: string) => void }): http.Server {
+  const { coletor } = opts;
+  const log = opts.log ?? (() => {});
+
+  async function route(req: http.IncomingMessage, url: URL): Promise<unknown> {
+    const m = req.method ?? 'GET';
+    const parts = url.pathname.split('/').filter(Boolean);
+    if (parts[0] !== 'coletor' || parts[1] !== 'v1') throw new HttpError(404, 'Rota não encontrada');
+    const [, , a, b, c, extra] = parts;
+    const device = await coletor.authenticate(req.headers.authorization);
+
+    if (a === 'labels' && !b && m === 'GET') return coletor.listPublished();
+    if (a === 'labels' && b && !c && m === 'GET') {
+      const env = await coletor.envelope(b);
+      const etag = `"${env.packageSha256}"`;
+      const given = (req.headers['if-none-match'] ?? '').split(',').map((s) => s.trim().replace(/^W\//, ''));
+      if (given.includes(etag) || given.includes(env.packageSha256)) return new Reply(304, undefined, { ETag: etag });
+      return new Reply(200, env, { ETag: etag });
+    }
+    if (a === 'labels' && b && c === 'version' && !extra && m === 'GET') return coletor.version(b);
+    if (a === 'print-reports' && !b && m === 'POST') {
+      const result = await coletor.report(device, await readBody(req, 1024 * 1024));
+      if (!result.duplicate) log(`coletor ${device.deviceId}: relatório ${result.reportId}`);
+      return result;
+    }
+    throw new HttpError(404, 'Rota não encontrada');
+  }
+
+  return http.createServer(async (req, res) => {
+    try {
+      respond(res, await route(req, new URL(req.url ?? '/', 'http://coletor')), log);
+    } catch (e) {
+      respond(res, undefined, log, e);
     }
   });
 }
