@@ -24,4 +24,5 @@ export * from './render/mono';
 export * from './render/resolve';
 export * from './templates/versioning';
 export * from './templates/inheritance';
+export * from './templates/file';
 export * from './print/orchestrator';

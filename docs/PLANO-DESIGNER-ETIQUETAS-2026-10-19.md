@@ -82,8 +82,12 @@ Feito no software (falta só a leitura física, que entra na etiqueta do passo 1
   designer: **151 passando** (engine 119, exporters 23, print-server 9); `typecheck` sem erros.
 - Etiqueta de teste física (`designer/tools/etiqueta-teste-fisico.ts`) ganhou a faixa de baixo com os três
   códigos (só em rolo de 150 mm).
-- **PDF417: pendente.** O caminho 2D supõe símbolo quadrado; PDF417 é retangular e muda prévia, resolver e
-  os três exportadores — fica como passo próprio.
+- **PDF417: FEITO (2026-10-19, depois do push `29b801c`).** Retangular: matriz real (`rowmult: 1`, uma
+  entrada por linha) com linhas de `PDF417_ROW_MODULES` = 3 módulos (mínimo da norma). O módulo tem de
+  caber na largura (colunas) e na altura (linhas × 3). Nas impressoras vai como **imagem** (`RASTER_2D`,
+  mesmo critério: `^B7`/`PDF417`/`b` nativos não validados) e gira com o objeto; QR e DataMatrix não
+  mudaram. Prévia (canvas, SVG, PDF) desenha as linhas com a altura certa. `symbolBox2D()` dá a caixa
+  ocupada a todos. Testes: `exporters/test/pdf417.test.ts` (11).
 
 Texto original do passo:
 
@@ -144,7 +148,28 @@ código ZPL proposto nela repetia erros da seção 3 (`^^`, `^A` com `B`/`N` com
   exporters 13, print-server 9); `npm run typecheck` sem erros.
 - **Não validado na impressora** — entra na etiqueta do passo 1 quando a TSC estiver ligada.
 
-## 6. Fora deste plano (decisão posterior)
+## 6. Itens de outra análise de referência — 2026-10-19 (sem commit)
+
+Lista recebida: dados fantasma, colisão, desfazer/refazer, salvar/abrir template, prévia com margem.
+Conferido no código: **dados fantasma** (50 linhas de `generateMockRows` desde a abertura), **desfazer/
+refazer** (Ctrl+Z/Y, 100 passos) e **prévia com margem** (simulador) já existiam. Faltavam dois:
+
+- **Alerta de código invadido (`BARCODE_OVERLAP`)**, em `checkGeometry`. Diferente da proposta (marcar
+  qualquer sobreposição): só dispara quando algo invade a área de um **código de barras**, em qualquer
+  ordem de camada — na térmica o preto soma, não existe "por cima". Moldura vazia que só contorna o
+  código não conta; a que cruza com a borda conta. Caixas visíveis já giradas. Testes: `overlap.test.ts` (8).
+  O alerta achou dois erros na própria etiqueta de teste do passo 1 (texto sobre o QR, texto girado
+  sobre o DataMatrix) — corrigidos no gerador, que agora também lista os alertas de validação e sai limpo.
+- **Template como arquivo** (`engine/src/templates/file.ts`, aba Templates › Arquivo): exporta
+  `<nome>.athoslabel.json` com formato, versão do formato e SHA-256 do template; ao abrir, valida tudo
+  antes (JSON, formato, versão mais nova, medidas, tipos, simbologias, imagem, ids repetidos, hash) e
+  recusa com o motivo. Importado ganha id novo (nunca sobrescreve a biblioteca) e sai sem vínculo de
+  herança. Base do passo 6 (o coletor poderá conferir o mesmo hash). Testes: `template-file.test.ts` (7).
+
+Suíte do designer: **177 passando** (engine 134, exporters 34, print-server 9); `typecheck` e
+`npm run build` sem erros.
+
+## 7. Fora deste plano (decisão posterior)
 
 Colaboração em tempo real, sugestão de layout por IA, motor em WebAssembly e backend em nuvem
 apareceram no plano de referência. Só entram com pedido de cliente e decisão registrada.

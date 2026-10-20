@@ -1,7 +1,8 @@
-import { useMemo, useState } from 'react';
-import { diffTemplates, resolveLabel, type LabelTemplate } from '@athos-label/engine';
+import { useMemo, useRef, useState } from 'react';
+import { diffTemplates, resolveLabel, TemplateFileError, templateFromFile, templateToFile, type LabelTemplate } from '@athos-label/engine';
 import { labelToSvg } from '@athos-label/exporters';
 import { useDesigner, usePreviewRow } from '../store';
+import { downloadBlob, readFileAsText } from '../lib/persist';
 import { appMeasurer } from '../lib/measure';
 import { Notice, Section, Text } from '../components/ui';
 
@@ -85,6 +86,8 @@ export function TemplatesPanel() {
         </div>
       </Section>
 
+      <TemplateFileSection />
+
       <Section title={`Versões de "${template.name}"`}>
         <div className="grid2">
           <Text label="O que mudou" value={note} onCommit={setNote} placeholder="Ex.: preço maior" />
@@ -109,6 +112,54 @@ export function TemplatesPanel() {
 
       <ABCompare options={options} />
     </>
+  );
+}
+
+/**
+ * Exportar/abrir template como arquivo `.athoslabel.json` (2026-10-19). O arquivo leva SHA-256;
+ * ao abrir, `templateFromFile` confere tudo e recusa com o motivo, sem abrir etiqueta pela metade.
+ */
+function TemplateFileSection() {
+  const template = useDesigner((s) => s.template);
+  const importTemplate = useDesigner((s) => s.importTemplate);
+  const file = useRef<HTMLInputElement>(null);
+  const [result, setResult] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null);
+
+  const exportFile = async () => {
+    const name = template.name.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^\w-]+/g, '-').replace(/^-+|-+$/g, '') || 'etiqueta';
+    downloadBlob(await templateToFile(template), `${name}.athoslabel.json`, 'application/json');
+    setResult({ kind: 'ok', text: `Arquivo exportado: ${name}.athoslabel.json` });
+  };
+
+  const openFile = async (file: File | undefined) => {
+    if (!file) return;
+    try {
+      const t = await templateFromFile(await readFileAsText(file));
+      importTemplate(t);
+      setResult({ kind: 'ok', text: `"${t.name}" aberto de ${file.name} (${t.objects.length} objetos) e adicionado à biblioteca.` });
+    } catch (e) {
+      setResult({ kind: 'error', text: `Não foi possível abrir ${file.name}: ${e instanceof TemplateFileError ? e.message : String(e)}` });
+    }
+  };
+
+  return (
+    <Section title="Arquivo">
+      <div className="row">
+        <button onClick={() => void exportFile()}>Exportar arquivo</button>
+        <button onClick={() => file.current?.click()}>Abrir arquivo…</button>
+        <input
+          ref={file}
+          type="file"
+          accept=".json,application/json"
+          hidden
+          onChange={(e) => {
+            void openFile(e.target.files?.[0]);
+            e.target.value = '';
+          }}
+        />
+      </div>
+      {result && <Notice kind={result.kind}>{result.text}</Notice>}
+    </Section>
   );
 }
 

@@ -93,6 +93,8 @@ interface DesignerState {
   setTab(t: Tab): void;
   setLanguage(l: PrinterLanguage): void;
   newTemplate(): void;
+  /** Template vindo de arquivo (já validado por templateFromFile, com id novo): entra na biblioteca e abre. */
+  importTemplate(t: LabelTemplate): void;
   openTemplate(id: string): void;
   createVariant(name: string): void;
   deleteTemplate(id: string): void;
@@ -240,6 +242,9 @@ export const useDesigner = create<DesignerState>((set, get) => ({
 
   newTemplate: () => {
     const t = { ...createTemplate(50, 30, 'Nova etiqueta'), id: createId() };
+    set((s) => ({ template: t, past: [], future: [], selectedIds: [], library: { ...s.library, [t.id]: rootEntry(t) } }));
+  },
+  importTemplate: (t) => {
     set((s) => ({ template: t, past: [], future: [], selectedIds: [], library: { ...s.library, [t.id]: rootEntry(t) } }));
   },
   openTemplate: (id) => {
