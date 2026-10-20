@@ -60,9 +60,9 @@ function alvo(px: number): MonoBitmap {
 let t: LabelTemplate = createTemplate(largura, altura, 'Teste físico — Passo 1');
 const objetos = [
   createBox({ id: 'moldura', name: 'Moldura', x: 2, y: 2, width: 96, height: 96, borderMm: 0.3 }),
-  createTextObject({ id: 'acentos', name: 'Texto acentuado', content: 'AÇÚCAR ÁGUA PÃO ÊXITO', x: 5, y: 5, width: 70, height: 6,
-    font: { family: 'Helvetica', sizeMm: 4, bold: false, italic: false }, fit: 'NONE' }),
-  createTextObject({ id: 'girado', name: 'Texto girado 90°', content: 'GIRADO 90', x: 70, y: 40, width: 40, height: 6, rotation: 90,
+  createTextObject({ id: 'acentos', name: 'Texto acentuado', content: 'AÇÚCAR ÁGUA PÃO ÊXITO', x: 5, y: 5, width: 52, height: 6,
+    font: { family: 'Helvetica', sizeMm: 3.2, bold: false, italic: false }, fit: 'NONE' }),
+  createTextObject({ id: 'girado', name: 'Texto girado 90°', content: 'GIRADO 90', x: 92, y: 40, width: 40, height: 6, rotation: 90,
     font: { family: 'Helvetica', sizeMm: 4, bold: false, italic: false }, fit: 'NONE' }),
   createBarcode1D({ id: 'ean13', name: 'EAN-13', symbology: 'EAN13', content: '4006381333931', x: 5, y: 15, width: 45, height: 20 }),
   createBarcode1D({ id: 'code128', name: 'Code128', symbology: 'CODE128', content: 'ATHOS-123456', x: 5, y: 40, width: 55, height: 15 }),
@@ -113,4 +113,7 @@ writeFileSync(
     '',
   ].join('\n'),
 );
-console.log(`ok: ${bytes.length} bytes ${lingua} em ${saida}; avisos: ${warnings?.length ?? 0}`);
+console.log(`ok: ${bytes.length} bytes ${lingua} em ${saida}; avisos do exportador: ${warnings?.length ?? 0}`);
+// Alertas da validação (fora da etiqueta, margem, código invadido…): a etiqueta de teste deve sair sem nenhum.
+for (const i of resolved.issues) console.log(`validação ${i.severity}: ${i.code} — ${i.message}`);
+if (resolved.issues.length === 0) console.log('validação: nenhum alerta');

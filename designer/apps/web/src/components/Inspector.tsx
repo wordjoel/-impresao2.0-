@@ -280,6 +280,7 @@ function Barcode2DProps({ obj, set }: { obj: Barcode2DObject; set: Setter }) {
         options={[
           ['QR', 'QR Code'],
           ['DATAMATRIX', 'DataMatrix'],
+          ['PDF417', 'PDF417 (retangular)'],
         ]}
         onChange={(symbology) => set({ symbology })}
       />

@@ -1,5 +1,17 @@
-import { MonoBitmap, RASTER_1D, type ResolvedElement } from '@athos-label/engine';
-import { bytesToLatin1, dots, latin1Bytes, layoutLines, localRectBounds, quarterTurn, raster1D, rotationIssue, toCp1252, toLabel } from './common';
+import { MonoBitmap, RASTER_1D, RASTER_2D, type ResolvedElement } from '@athos-label/engine';
+import {
+  bytesToLatin1,
+  dots,
+  latin1Bytes,
+  layoutLines,
+  localRectBounds,
+  quarterTurn,
+  raster1D,
+  raster2D,
+  rotationIssue,
+  toCp1252,
+  toLabel,
+} from './common';
 import type { CommandGenerator, ElementContext } from './printer';
 
 /**
@@ -74,6 +86,10 @@ export const tspl: CommandGenerator = {
         return `BARCODE ${at(0, 0)},"${code}",${Math.max(1, D(el.barHeightMm))},${el.humanReadable ? 1 : 0},${rot.degrees},${m},${wide},${tsplQuote(el.printerData)}\r\n`;
       }
       case 'barcode2d': {
+        if (RASTER_2D.has(el.symbology)) {
+          const r = raster2D(el);
+          return bitmap(r.at, r.bmp, D);
+        }
         const size = el.moduleMm * el.symbolModules;
         const b = localRectBounds(el, rot.degrees, 0, 0, size, size);
         if (el.symbology === 'QR') {

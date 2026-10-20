@@ -1,4 +1,14 @@
-import { boundsOf, mmToDots, MonoBitmap, type BBox, type Issue, type ResolvedBarcode1D, type ResolvedText } from '@athos-label/engine';
+import {
+  boundsOf,
+  mmToDots,
+  MonoBitmap,
+  symbolBox2D,
+  type BBox,
+  type Issue,
+  type ResolvedBarcode1D,
+  type ResolvedBarcode2D,
+  type ResolvedText,
+} from '@athos-label/engine';
 
 /** Rotação arredondada para o quarto de volta mais próximo (o que impressora térmica suporta). */
 export function quarterTurn(rotation: number): { q: 0 | 1 | 2 | 3; degrees: number; exact: boolean } {
@@ -102,6 +112,17 @@ export function raster1D(el: ResolvedBarcode1D, dpi: number): { barsAt: BBox; ba
     overflow: false,
   };
   return { barsAt, bars: flat.rotate(degrees), text };
+}
+
+/**
+ * Código 2D desenhado como imagem (simbologias em `RASTER_2D`, hoje só PDF417): a matriz real com
+ * linhas de `rowModules` módulos, girada como o objeto (PDF417 é retangular, a orientação importa).
+ */
+export function raster2D(el: ResolvedBarcode2D): { at: BBox; bmp: MonoBitmap } {
+  const { degrees } = quarterTurn(el.rotation);
+  const box = symbolBox2D(el);
+  const bmp = MonoBitmap.fromMatrix(el.matrix, el.rows, el.cols, el.moduleDots, el.rowModules).rotate(degrees);
+  return { at: localRectBounds(el, degrees, 0, 0, box.widthMm, box.heightMm), bmp };
 }
 
 /** Sequências contínuas de módulos escuros: [início, comprimento]. Menos retângulos no SVG/PDF. */

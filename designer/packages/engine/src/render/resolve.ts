@@ -1,6 +1,16 @@
-import { BarcodeError, encode1D, encode2D, moduleCount1D, moduleDots, RASTER_1D, symbolSize2D } from '../barcode/encode';
+import {
+  BarcodeError,
+  encode1D,
+  encode2D,
+  moduleCount1D,
+  moduleDots,
+  PDF417_ROW_MODULES,
+  RASTER_1D,
+  RASTER_2D,
+  symbolSize2D,
+} from '../barcode/encode';
 import { compileString, renderString, TemplateError } from '../data/template-string';
-import { boundsOf, containsBox } from '../geometry/bbox';
+import { boundsOf, containsBox, intersects } from '../geometry/bbox';
 import { dotsToMm, mmToDots } from '../geometry/units';
 import { DEFAULT_BRAND, resolveStyle, type BrandTheme } from '../model/brand';
 import type {
@@ -37,6 +47,7 @@ export type IssueCode =
   | 'QUIET_ZONE'
   | 'OUT_OF_BOUNDS'
   | 'SAFETY_MARGIN'
+  | 'BARCODE_OVERLAP'
   | 'UNSUPPORTED';
 
 export interface Issue {
@@ -103,6 +114,18 @@ export interface ResolvedBarcode2D extends Frame {
   symbolModules: number;
   moduleDots: number;
   moduleMm: number;
+  /** Altura de cada linha em módulos: 1 (QR, DataMatrix) ou PDF417_ROW_MODULES (PDF417). */
+  rowModules: number;
+}
+
+/**
+ * Caixa ocupada pelo símbolo 2D, em mm. QR/DataMatrix: quadrado do pior caso (`symbolModules`).
+ * PDF417: retângulo da matriz real, com linhas de `rowModules` módulos de altura.
+ */
+export function symbolBox2D(el: ResolvedBarcode2D): { widthMm: number; heightMm: number } {
+  if (el.symbology === 'PDF417') return { widthMm: el.cols * el.moduleMm, heightMm: el.rows * el.rowModules * el.moduleMm };
+  const side = el.symbolModules * el.moduleMm;
+  return { widthMm: side, heightMm: side };
 }
 
 export interface ResolvedImage extends Frame {
@@ -305,13 +328,20 @@ export function resolveLabel(
   function resolve2D(obj: Barcode2DObject, r: { text: string; dynamic: boolean }): ResolvedBarcode2D {
     const size = symbolSize2D(obj.symbology, r.text, obj.ecLevel);
     const symbolModules = Math.max(size.rows, size.cols);
-    const enc = opts.barcodeDetail === 'size' ? null : encode2D(obj.symbology, r.text, obj.ecLevel);
-    let m = moduleDots(mmToDots(Math.min(obj.width, obj.height), dpi), symbolModules, 10);
+    const raster = RASTER_2D.has(obj.symbology);
+    const enc = opts.barcodeDetail === 'size' && !raster ? null : encode2D(obj.symbology, r.text, obj.ecLevel);
+    const rowModules = obj.symbology === 'PDF417' ? PDF417_ROW_MODULES : 1;
+    // PDF417 é retangular: o módulo tem de caber na largura (colunas) E na altura (linhas × altura da linha).
+    let m =
+      obj.symbology === 'PDF417'
+        ? Math.min(moduleDots(mmToDots(obj.width, dpi), size.cols, 10), moduleDots(mmToDots(obj.height, dpi), size.rows * rowModules, 10))
+        : moduleDots(mmToDots(Math.min(obj.width, obj.height), dpi), symbolModules, 10);
     if (m === 0) {
+      const box = obj.symbology === 'PDF417' ? `${obj.width} x ${obj.height}` : `${Math.min(obj.width, obj.height)}`;
       issues.push({
         severity: 'error',
         code: 'BARCODE_TOO_SMALL',
-        message: `${obj.name}: matriz ${size.cols}x${size.rows} não cabe em ${Math.min(obj.width, obj.height)} mm`,
+        message: `${obj.name}: matriz ${size.cols}x${size.rows} não cabe em ${box} mm`,
         objectId: obj.id,
       });
       m = 1;
@@ -328,6 +358,7 @@ export function resolveLabel(
       symbolModules,
       moduleDots: m,
       moduleMm: dotsToMm(m, dpi),
+      rowModules,
     };
   }
 }
@@ -345,6 +376,43 @@ export function checkGeometry(template: LabelTemplate, brand: BrandTheme = DEFAU
       out.push({ severity: 'error', code: 'OUT_OF_BOUNDS', message: `${o.name}: sai da etiqueta`, objectId: o.id });
     } else if (m > 0 && !containsBox(safe, box)) {
       out.push({ severity: 'warning', code: 'SAFETY_MARGIN', message: `${o.name}: dentro da margem de segurança de ${m} mm`, objectId: o.id });
+    }
+  }
+  out.push(...checkBarcodeOverlap(template.objects.filter((o) => o.visible)));
+  return out;
+}
+
+const isCode = (o: LabelObject) => o.type === 'BARCODE_1D' || o.type === 'BARCODE_2D';
+
+/**
+ * 2026-10-19 — objeto que invade a área de um código de barras. Em impressão térmica não existe
+ * "por cima": o preto de qualquer objeto soma com as barras, independente da ordem das camadas,
+ * e o código pode não ler. Por isso só códigos disparam o alerta (texto sobre texto ou dentro de
+ * uma moldura é normal). Moldura vazia que só CONTORNA o código não conta: o alerta sai se a borda
+ * dela cruza a área do código. Caixas são as visíveis já giradas (conservador em rotação).
+ */
+function checkBarcodeOverlap(objects: readonly LabelObject[]): Issue[] {
+  const out: Issue[] = [];
+  for (let i = 0; i < objects.length; i++) {
+    for (let j = i + 1; j < objects.length; j++) {
+      const a = objects[i]!;
+      const b = objects[j]!;
+      if (!isCode(a) && !isCode(b)) continue;
+      const [code, other] = isCode(a) ? [a, b] : [b, a];
+      const codeBox = boundsOf(code);
+      const otherBox = boundsOf(other);
+      if (!intersects(codeBox, otherBox)) continue;
+      if (other.type === 'BOX' && !other.filled) {
+        const t = other.borderMm;
+        const inner = { x: otherBox.x + t, y: otherBox.y + t, width: otherBox.width - 2 * t, height: otherBox.height - 2 * t };
+        if (containsBox(inner, codeBox)) continue;
+      }
+      out.push({
+        severity: 'warning',
+        code: 'BARCODE_OVERLAP',
+        message: `${other.name} invade a área de ${code.name}: na térmica o preto soma com as barras e o código pode não ler`,
+        objectId: code.id,
+      });
     }
   }
   return out;

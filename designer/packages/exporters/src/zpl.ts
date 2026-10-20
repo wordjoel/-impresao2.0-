@@ -1,5 +1,5 @@
-import { MonoBitmap, RASTER_1D, type ResolvedElement } from '@athos-label/engine';
-import { dots, layoutLines, localRectBounds, quarterTurn, raster1D, rotationIssue } from './common';
+import { MonoBitmap, RASTER_1D, RASTER_2D, type ResolvedElement } from '@athos-label/engine';
+import { dots, layoutLines, localRectBounds, quarterTurn, raster1D, raster2D, rotationIssue } from './common';
 import type { CommandGenerator, ElementContext } from './printer';
 
 /**
@@ -84,7 +84,11 @@ export const zpl: CommandGenerator = {
         return `${fo(D(b.x), D(b.y))}^BY${el.moduleDots},3,${h}${cmd}^FH_^FD${zplEscape(el.printerData)}^FS\n`;
       }
       case 'barcode2d': {
-        // Símbolos 2D leem em qualquer orientação: vão sem giro, no canto da caixa visível.
+        if (RASTER_2D.has(el.symbology)) {
+          const r = raster2D(el);
+          return graphic(D(r.at.x), D(r.at.y), r.bmp);
+        }
+        // QR/DataMatrix leem em qualquer orientação: vão sem giro, no canto da caixa visível.
         const size = el.moduleMm * el.symbolModules;
         const b = localRectBounds(el, rot.degrees, 0, 0, size, size);
         if (el.symbology === 'QR') {

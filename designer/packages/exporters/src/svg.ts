@@ -38,9 +38,10 @@ function elementSvg(el: ResolvedElement, o: SvgOptions): string {
       }
       case 'barcode2d': {
         let rects = '';
+        const rowMm = el.moduleMm * el.rowModules;
         for (let r = 0; r < el.rows; r++) {
           for (const [s, len] of runs(el.matrix, r * el.cols, el.cols)) {
-            rects += `<rect x="${n(s * el.moduleMm)}" y="${n(r * el.moduleMm)}" width="${n(len * el.moduleMm)}" height="${n(el.moduleMm)}"/>`;
+            rects += `<rect x="${n(s * el.moduleMm)}" y="${n(r * rowMm)}" width="${n(len * el.moduleMm)}" height="${n(rowMm)}"/>`;
           }
         }
         return `<g fill="#000" shape-rendering="crispEdges">${rects}</g>`;

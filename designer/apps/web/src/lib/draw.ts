@@ -56,9 +56,10 @@ export function drawElement(c: CanvasRenderingContext2D, el: ResolvedElement): v
     }
     case 'barcode2d': {
       c.fillStyle = '#000';
+      const rowMm = el.moduleMm * el.rowModules; // PDF417: linha mais alta que o módulo
       for (let r = 0; r < el.rows; r++) {
         for (const [s, len] of runs(el.matrix, r * el.cols, el.cols)) {
-          c.fillRect(s * el.moduleMm, r * el.moduleMm, len * el.moduleMm, el.moduleMm);
+          c.fillRect(s * el.moduleMm, r * rowMm, len * el.moduleMm, rowMm);
         }
       }
       break;

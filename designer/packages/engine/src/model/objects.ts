@@ -79,7 +79,7 @@ export interface Barcode1DObject extends BaseLabelObject {
   quietZoneMm: number;
 }
 
-export type Symbology2D = 'QR' | 'DATAMATRIX';
+export type Symbology2D = 'QR' | 'DATAMATRIX' | 'PDF417';
 export type QrErrorLevel = 'L' | 'M' | 'Q' | 'H';
 
 export interface Barcode2DObject extends BaseLabelObject {

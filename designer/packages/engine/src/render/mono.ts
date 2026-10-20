@@ -95,13 +95,17 @@ export class MonoBitmap {
     return out;
   }
 
-  /** Matriz de módulos (código 2D) ampliada para `module` dots por módulo. */
-  static fromMatrix(matrix: ArrayLike<number>, rows: number, cols: number, module: number): MonoBitmap {
-    const out = new MonoBitmap(cols * module, rows * module);
+  /**
+   * Matriz de módulos (código 2D) ampliada para `module` dots por módulo. `rowModules` é a altura
+   * de cada linha em módulos (1 em QR/DataMatrix; 3 em PDF417, cujas linhas são mais altas).
+   */
+  static fromMatrix(matrix: ArrayLike<number>, rows: number, cols: number, module: number, rowModules = 1): MonoBitmap {
+    const rowDots = module * rowModules;
+    const out = new MonoBitmap(cols * module, rows * rowDots);
     for (let r = 0; r < rows; r++) {
       for (let c = 0; c < cols; c++) {
         if (!matrix[r * cols + c]) continue;
-        for (let dy = 0; dy < module; dy++) for (let dx = 0; dx < module; dx++) out.set(c * module + dx, r * module + dy, true);
+        for (let dy = 0; dy < rowDots; dy++) for (let dx = 0; dx < module; dx++) out.set(c * module + dx, r * rowDots + dy, true);
       }
     }
     return out;

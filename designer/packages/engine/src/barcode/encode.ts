@@ -13,6 +13,15 @@ import { ean13CheckDigit, gs1Check, isValidEan13, isValidGs1Number, isValidUpcA,
  */
 export const RASTER_1D: ReadonlySet<Symbology1D> = new Set<Symbology1D>(['ITF14', 'GS1_128']);
 
+/** Mesmo critério para 2D: PDF417 (ZPL ^B7, TSPL PDF417, EPL b não validados em impressora). */
+export const RASTER_2D: ReadonlySet<Symbology2D> = new Set<Symbology2D>(['PDF417']);
+
+/**
+ * Altura de cada linha do PDF417 em módulos. A norma pede no mínimo 3X; é o padrão do bwip-js
+ * e dos geradores comuns.
+ */
+export const PDF417_ROW_MODULES = 3;
+
 /** AIs com número GS1 de tamanho fixo e verificador. */
 const GS1_FIXED_CHECKED: Record<string, number> = { '00': 18, '01': 14, '02': 14 };
 
@@ -198,6 +207,11 @@ const sizeCache = new Map<string, { rows: number; cols: number }>();
  */
 export function symbolSize2D(symbology: Symbology2D, data: string, ecLevel: QrErrorLevel = 'M'): { rows: number; cols: number } {
   if (data === '') throw new BarcodeError('Código 2D vazio');
+  // PDF417 vai como imagem (RASTER_2D): o tamanho é o da codificação real, não um pior caso.
+  if (symbology === 'PDF417') {
+    const enc = encode2D('PDF417', data);
+    return { rows: enc.rows, cols: enc.cols };
+  }
   const bytes = new TextEncoder().encode(data);
   const units = symbology === 'QR' ? bytes.length : bytes.reduce((n, b) => n + (b > 127 ? 2 : 1), 0);
   const key = `${symbology}|${ecLevel}|${units}`;
@@ -220,6 +234,8 @@ export function encode2D(symbology: Symbology2D, data: string, ecLevel: QrErrorL
 
   let r: RawResult;
   if (symbology === 'QR') r = raw('qrcode', data, { eclevel: ecLevel });
+  // rowmult 1: uma entrada por linha da matriz; a altura da linha (PDF417_ROW_MODULES) é aplicada no desenho.
+  else if (symbology === 'PDF417') r = raw('pdf417', data, { rowmult: 1 });
   else {
     const size = symbolSize2D('DATAMATRIX', data);
     r = raw('datamatrix', data, { rows: size.rows, columns: size.cols });

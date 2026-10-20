@@ -111,13 +111,15 @@ function drawElement(
         );
       }
       break;
-    case 'barcode2d':
+    case 'barcode2d': {
+      const rowMm = el.moduleMm * el.rowModules;
       for (let row = 0; row < el.rows; row++) {
         for (const [s, len] of runs(el.matrix, row * el.cols, el.cols)) {
-          page.drawRectangle({ x: s * el.moduleMm, y: row * el.moduleMm, width: len * el.moduleMm, height: el.moduleMm, color: black });
+          page.drawRectangle({ x: s * el.moduleMm, y: row * rowMm, width: len * el.moduleMm, height: rowMm, color: black });
         }
       }
       break;
+    }
     case 'image': {
       const img = images.get(el.src);
       if (img) upright(0, el.height, () => page.drawImage(img, { x: 0, y: 0, width: el.width, height: el.height }));
