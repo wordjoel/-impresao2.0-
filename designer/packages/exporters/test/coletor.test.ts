@@ -188,6 +188,8 @@ describe('lacunas (o que o app valida)', () => {
     expect(err(() => fillSlot(text, undefined, 'ZPL'))).toBe('MISSING');
     expect(err(() => fillSlot(text, '', 'ZPL'))).toBe('MISSING');
     expect(err(() => fillSlot(text, 'a\nb', 'ZPL'))).toBe('INVALID');
+    expect(err(() => fillSlot(text, 'a\ud800', 'ZPL'))).toBe('INVALID'); // meio caractere
+    expect(fillSlot({ ...text, maxLength: 1 }, '😀', 'ZPL')).toBe('😀'); // par completo = 1 caractere
     expect(err(() => fillSlot(text, '123456', 'ZPL'))).toBe('INVALID');
     expect(fillSlot(text, 'çãõé', 'TSPL')).toBe('çãõé');
     expect(err(() => fillSlot(ean, '7891234567890', 'ZPL'))).toBe('INVALID');

@@ -155,8 +155,10 @@ export class SlotValueError extends Error {
 
 // ------------------------------------------------------------------ montagem (referência do app)
 
+// Controle e "surrogate" solto (meio caractere): JS e Java codificam este último de jeitos
+// diferentes em UTF-8, então o app e o PC divergiriam nos bytes. Recusado nos dois lados.
 // eslint-disable-next-line no-control-regex
-const CONTROL = /[\u0000-\u001f\u007f]/;
+const CONTROL = /[\u0000-\u001f\u007f]|\p{Cs}/u;
 const LEADING_MARK = /^\p{M}/u;
 const utf8Length = (s: string) => new TextEncoder().encode(s).length;
 const codePoints = (s: string) => [...s].length;
@@ -169,7 +171,7 @@ export function fillSlot(slot: PackageSlot, raw: string | undefined, language: C
   const invalid = (why: string) => new SlotValueError(slot.field, 'INVALID', `${slot.field}: ${why}`);
   // v1: todo campo é obrigatório (linha vazia no gerador some do comando e mudaria a geometria).
   if (raw === undefined || raw === '') throw new SlotValueError(slot.field, 'MISSING', `${slot.field}: campo obrigatório vazio`);
-  if (CONTROL.test(raw)) throw invalid('caractere de controle não é aceito');
+  if (CONTROL.test(raw)) throw invalid('caractere de controle ou inválido não é aceito');
 
   let value = raw;
   if (slot.kind !== 'TEXT' && slot.kind !== 'QR') {

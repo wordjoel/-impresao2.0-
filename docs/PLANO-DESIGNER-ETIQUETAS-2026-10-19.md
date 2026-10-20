@@ -243,9 +243,34 @@ Texto original das pendências, mantido para histórico:
   Subida real com `COLETOR_LISTEN=127.0.0.1:7182` em diretório temporário: os dois listeners sobem, LAN sem
   token → 401, `/api` na LAN → 404.
 
-Próximo (6c): lado Android — guardar o provisionamento (MDM / tela com PIN), baixar e validar pacotes
-(SHA-256, assinatura, vetores), conferência de versão com a janela de 15 min, template da ponte via
-`printJob(TEMPLATE)` e fila de relatórios. Depois: botão "Publicar no coletor" no designer.
+**6c-1. Núcleo Android (Kotlin puro) — FEITO (2026-10-20, sem commit).** Pacote
+`android/app/src/main/java/br/com/atos/printbridge/domain/coletor/`, sem `android.*` e sem dependência nova:
+- `StrictJson`: leitor JSON estrito (o `org.json` do Android não roda em teste JVM e o app não tem outra lib).
+- `LabelPackage`: modelo + leitura do contrato; recusa formato/versão desconhecidos e estrutura fora do contrato.
+- `ColetorAssembler`: espelho exato de `fillSlot`/`assembleLabel` do TS (NFC e Windows-1252 no TSPL, escape
+  `_XX` no ZPL, EAN/UPC/Code 128 como o `normalize1D`, `trim` com o conjunto de espaços do JavaScript).
+- `ColetorPackageVerifier`: SHA-256 → assinatura ES256 com a chave e o `kid` do provisionamento → leitura →
+  vetores de conformidade. JDK puro, como o `EcdsaLicenseTokenVerifier`.
+- `ColetorPrintPolicy`: decisão da conferência de versão (P1: janela de 15 min no relógio monotônico, zerada
+  em reboot via `bootId`; coletor revogado nunca usa a janela) e escolha do alvo pela impressora (AUTO: TSPL
+  para TSC, ZPL para GENERIC_ZPL, modelo não informado não adivinha).
+- Paridade achada no caminho: surrogate solto vira 3 bytes no JS e 1 no Java. Agora os dois lados recusam
+  (`coletor.ts` ajustado, com teste).
+- **Teste cruzado TS × Kotlin**: `designer/apps/print-server/scripts/gen-coletor-fixture.ts` publica um template
+  real pelo `ColetorService` (chave nova, descartada; só a pública vai para
+  `android/app/src/test/resources/coletor/fixture.json`) com 4 alvos (ZPL/TSPL × 203/300), imagem estática
+  (BITMAP binário no TSPL), texto com acento/aspas/escapes, EAN-13/8, UPC-A, Code 128 e QR com URL. O Kotlin
+  confere o envelope e reproduz os 12 casos de montagem e os 408 de lacuna exatamente. Mutação de prova (hexa
+  minúsculo no escape ZPL) derrubou 4 dos 6 testes; restaurado.
+- Testes: `domain/coletor/*Test.kt` (12). Suíte Android: **388 passando**, 1 ignorado (integração que já
+  dependia de fixture externa). Designer: 207 passando.
+- Regerar a fixture sempre que mudar `coletor.ts`: `cd designer/apps/print-server && npx tsx scripts/gen-coletor-fixture.ts`.
+
+Próximo (6c-2): ligar no app — guardar o provisionamento (MDM / tela com PIN; cleartext só para o IP do PC no
+`network_security_config`), cliente HTTP do coletor (lista, pacote com ETag, versão com 3 s, relatório),
+armazenamento dos pacotes validados, `printJob(TEMPLATE)` procurando também os pacotes do designer (erros
+`UNKNOWN_TEMPLATE`/`MISSING_VARIABLES`/`INVALID_VARIABLE_VALUE`/`LANGUAGE_MISMATCH` + o novo
+`TEMPLATE_VERSION_UNCONFIRMED`) e fila de relatórios. Depois: botão "Publicar no coletor" no designer.
 
 ## 5. Hifenização em português — FEITO (2026-10-19, sem commit)
 

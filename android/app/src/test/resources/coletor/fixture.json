@@ -1,0 +1,2678 @@
+{
+ "note": "Gerado por designer/apps/print-server/scripts/gen-coletor-fixture.ts. Chave de TESTE descartada; só a pública está aqui.",
+ "kid": "athos-label-b3bccb9b3e424855",
+ "publicKeySpkiB64": "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE4APvzw5fA3hVBCNQGHLAO1tik6Y+EIci/DxQpImGry+lYqFM36DhYqyhSwfw+/Wn/lkaCJi7RIZ7Yn/THUoUFw==",
+ "envelope": {
+  "packageJson": "{\"format\":\"athos-label-coletor\",\"formatVersion\":1,\"templateId\":\"fixture-gondola\",\"name\":\"Fixture coletor — Gôndola\",\"templateVersion\":7,\"templateHash\":\"f89795f18300f9dc2ae4cd2872a3d5c2e090367aa02e0bb5557a72f297d4bae1\",\"widthMm\":80,\"heightMm\":50,\"compiler\":\"@athos-label/exporters 0.1.0\",\"compiledAt\":\"2026-10-20T12:00:00.000Z\",\"fields\":[{\"name\":\"LOTE\",\"label\":\"LOTE\",\"required\":true,\"maxLength\":8,\"input\":\"ANY\",\"sample\":\"L-001\"},{\"name\":\"TURNO\",\"label\":\"TURNO\",\"required\":true,\"maxLength\":6,\"input\":\"ANY\",\"sample\":\"Manhã\"},{\"name\":\"DESC\",\"label\":\"DESC\",\"required\":true,\"maxLength\":12,\"input\":\"ANY\",\"sample\":\"Picanha\"},{\"name\":\"EAN\",\"label\":\"EAN\",\"required\":true,\"maxLength\":13,\"input\":\"SCAN\",\"sample\":\"7891234567895\"},{\"name\":\"EAN8\",\"label\":\"EAN8\",\"required\":true,\"maxLength\":8,\"input\":\"SCAN\",\"sample\":\"12345670\"},{\"name\":\"UPC\",\"label\":\"UPC\",\"required\":true,\"maxLength\":12,\"input\":\"SCAN\",\"sample\":\"036000291452\"},{\"name\":\"SKU\",\"label\":\"SKU\",\"required\":true,\"maxLength\":8,\"input\":\"SCAN\",\"sample\":\"PIC-0001\"}],\"targets\":[{\"language\":\"ZPL\",\"dpi\":203,\"segments\":[{\"lit\":\"^XA\\n^CI28\\n^PW639\\n^LL400\\n^LH0,0\\n^FO16,14^A0N,24,24^FB400,1,0,L,0^FH_^FDAçougue & Cia \\\"Centro\\\"^FS\\n^FO16,54^A0N,24,24^FB480,1,0,L,0^FH_^FDLote \"},{\"slot\":\"s1\"},{\"lit\":\" / \"},{\"slot\":\"s2\"},{\"lit\":\"^FS\\n^FO16,96^A0N,28,28^FB360,1,0,C,0^FH_^FD\"},{\"slot\":\"s3\"},{\"lit\":\"^FS\\n^FO570,40^A0R,24,24^FB160,1,0,L,0^FH_^FD\"},{\"slot\":\"s4\"},{\"lit\":\"^FS\\n^FO32,144^BY3,3,72^BEN,72,Y,N^FH_^FD\"},{\"slot\":\"s5\"},{\"lit\":\"^FS\\n^FO400,144^BY2,3,56^B8N,56,Y,N^FH_^FD\"},{\"slot\":\"s6\"},{\"lit\":\"^FS\\n^FO400,240^BY2,3,80^BUN,80,N,N,Y^FH_^FD\"},{\"slot\":\"s7\"},{\"lit\":\"^FS\\n^FO16,256^BY2,3,40^BCN,40,Y,N,N,A^FH_^FD\"},{\"slot\":\"s8\"},{\"lit\":\"^FS\\n^FO496,8^BQN,2,2^FH_^FDQA,https://ex.test/p/\"},{\"slot\":\"s9\"},{\"lit\":\"?l=\"},{\"slot\":\"s10\"},{\"lit\":\"^FS\\n^FO4,4^GB631,392,2,B,0^FS\\n^FO16,336^GFA,288,288,6,000E3F03F000000E3F03F000000E3F03F0001C71C71FFE381C71C71FFE381C71C71FFE38E07FFFFC01C0E07FFFFC01C0E07FFFFC01C0FF8E07000FF8FF8E07000FF8FF8E07000FF803F03F1C7E0003F03F1C7E0003F03F1C7E001FFFC7E380381FFFC7E380381FFFC7E38038FC01FFFF8FC0FC01FFFF8FC0FC01FFFF8FC000700703F1F800700703F1F800700703F1F81C7E3FE000001C7E3FE000001C7E3FE00000E381C7FC0E38E381C7FC0E38E381C7FC0E38FF8FFF0071C0FF8FFF0071C0FF8FFF0071C003FE071C7FF803FE071C7FF803FE071C7FF8E0003FE38E00E0003FE38E00E0003FE38E00FC0FC7FFF038FC0FC7FFF038FC0FC7FFF0380071FF03FFC00071FF03FFC00071FF03FFC01F8007E001F81F8007E001F81F8007E001F8^FS\\n^PQ\"},{\"copies\":true},{\"lit\":\"\\n^XZ\\n\"}],\"slots\":[{\"id\":\"s1\",\"field\":\"LOTE\",\"kind\":\"TEXT\",\"transform\":\"NONE\",\"maxLength\":8},{\"id\":\"s2\",\"field\":\"TURNO\",\"kind\":\"TEXT\",\"transform\":\"NONE\",\"maxLength\":8},{\"id\":\"s3\",\"field\":\"DESC\",\"kind\":\"TEXT\",\"transform\":\"NONE\",\"maxLength\":12},{\"id\":\"s4\",\"field\":\"TURNO\",\"kind\":\"TEXT\",\"transform\":\"NONE\",\"maxLength\":6},{\"id\":\"s5\",\"field\":\"EAN\",\"kind\":\"EAN13\",\"transform\":\"GS1_DATA\",\"maxLength\":12},{\"id\":\"s6\",\"field\":\"EAN8\",\"kind\":\"EAN8\",\"transform\":\"GS1_DATA\",\"maxLength\":7},{\"id\":\"s7\",\"field\":\"UPC\",\"kind\":\"UPCA\",\"transform\":\"GS1_DATA\",\"maxLength\":11},{\"id\":\"s8\",\"field\":\"SKU\",\"kind\":\"CODE128\",\"transform\":\"NONE\",\"maxLength\":13},{\"id\":\"s9\",\"field\":\"SKU\",\"kind\":\"QR\",\"transform\":\"NONE\",\"maxLength\":32},{\"id\":\"s10\",\"field\":\"LOTE\",\"kind\":\"QR\",\"transform\":\"NONE\",\"maxLength\":32}],\"conformance\":[{\"values\":{\"LOTE\":\"L-001\",\"TURNO\":\"Manhã\",\"DESC\":\"Picanha\",\"EAN\":\"7891234567895\",\"EAN8\":\"12345670\",\"UPC\":\"036000291452\",\"SKU\":\"PIC-0001\"},\"copies\":1,\"bytesSha256\":\"cebe5dba9ce38985c84f7af4b93fca33899410e90a582991d548a2391c3a2097\"},{\"values\":{\"LOTE\":\"Ação \\\"ç\\\"\",\"TURNO\":\"Ação \\\"\",\"DESC\":\"Ação \\\"ç\\\" ^~_\",\"EAN\":\"200000000001\",\"EAN8\":\"7654321\",\"UPC\":\"03600029145\",\"SKU\":\"A\\\"^~_\\\\b 9\"},\"copies\":3,\"bytesSha256\":\"1e06c3629885568360bd43e3125c83933839475b35362d24069e577ed2c4c278\"}]},{\"language\":\"ZPL\",\"dpi\":300,\"segments\":[{\"lit\":\"^XA\\n^CI28\\n^PW945\\n^LL591\\n^LH0,0\\n^FO24,21^A0N,35,35^FB591,1,0,L,0^FH_^FDAçougue & Cia \\\"Centro\\\"^FS\\n^FO24,80^A0N,35,35^FB709,1,0,L,0^FH_^FDLote \"},{\"slot\":\"s1\"},{\"lit\":\" / \"},{\"slot\":\"s2\"},{\"lit\":\"^FS\\n^FO24,142^A0N,41,41^FB531,1,0,C,0^FH_^FD\"},{\"slot\":\"s3\"},{\"lit\":\"^FS\\n^FO842,59^A0R,35,35^FB236,1,0,L,0^FH_^FD\"},{\"slot\":\"s4\"},{\"lit\":\"^FS\\n^FO47,213^BY4,3,106^BEN,106,Y,N^FH_^FD\"},{\"slot\":\"s5\"},{\"lit\":\"^FS\\n^FO591,213^BY4,3,83^B8N,83,Y,N^FH_^FD\"},{\"slot\":\"s6\"},{\"lit\":\"^FS\\n^FO591,354^BY3,3,118^BUN,118,N,N,Y^FH_^FD\"},{\"slot\":\"s7\"},{\"lit\":\"^FS\\n^FO24,378^BY4,3,59^BCN,59,Y,N,N,A^FH_^FD\"},{\"slot\":\"s8\"},{\"lit\":\"^FS\\n^FO732,12^BQN,2,4^FH_^FDQA,https://ex.test/p/\"},{\"slot\":\"s9\"},{\"lit\":\"?l=\"},{\"slot\":\"s10\"},{\"lit\":\"^FS\\n^FO6,6^GB933,579,4,B,0^FS\\n^FO24,496^GFA,639,639,9,00003E1FF007FC000000003E1FF007FC000000003E1FF007FC000000003E1FF007FC000000003E1FF007FC00000783C1E0F0FFFFC1E00783C1E0F0FFFFC1E00783C1E0F0FFFFC1E00783C1E0F0FFFFC1E0F803FFFFFFF8003E00F803FFFFFFF8003E00F803FFFFFFF8003E00F803FFFFFFF8003E00F803FFFFFFF8003E00FFFC3E00F00003FFE0FFFC3E00F00003FFE0FFFC3E00F00003FFE0FFFC3E00F00003FFE0007FC01FF0F87FC000007FC01FF0F87FC000007FC01FF0F87FC000007FC01FF0F87FC000007FC01FF0F87FC00007FFFFE0FF078001E007FFFFE0FF078001E007FFFFE0FF078001E007FFFFE0FF078001E0FF8001FFFFFF83FE00FF8001FFFFFF83FE00FF8001FFFFFF83FE00FF8001FFFFFF83FE00FF8001FFFFFF83FE000003C000F007FC3FE00003C000F007FC3FE00003C000F007FC3FE00003C000F007FC3FE00783FE1FFF000000000783FE1FFF000000000783FE1FFF000000000783FE1FFF00000000F87C01E0FFF803C1E0F87C01E0FFF803C1E0F87C01E0FFF803C1E0F87C01E0FFF803C1E0F87C01E0FFF803C1E0FFFC3FFFF0007C3E00FFFC3FFFF0007C3E00FFFC3FFFF0007C3E00FFFC3FFFF0007C3E00007FFE00F0F87FFFE0007FFE00F0F87FFFE0007FFE00F0F87FFFE0007FFE00F0F87FFFE0007FFE00F0F87FFFE0F800001FFF0783C000F800001FFF0783C000F800001FFF0783C000F800001FFF0783C000FF803FE0FFFFFC01E0FF803FE0FFFFFC01E0FF803FE0FFFFFC01E0FF803FE0FFFFFC01E0FF803FE0FFFFFC01E00003C1FFF007FFFE000003C1FFF007FFFE000003C1FFF007FFFE000003C1FFF007FFFE0007FC0000FF00003FE007FC0000FF00003FE007FC0000FF00003FE007FC0000FF00003FE0^FS\\n^PQ\"},{\"copies\":true},{\"lit\":\"\\n^XZ\\n\"}],\"slots\":[{\"id\":\"s1\",\"field\":\"LOTE\",\"kind\":\"TEXT\",\"transform\":\"NONE\",\"maxLength\":8},{\"id\":\"s2\",\"field\":\"TURNO\",\"kind\":\"TEXT\",\"transform\":\"NONE\",\"maxLength\":8},{\"id\":\"s3\",\"field\":\"DESC\",\"kind\":\"TEXT\",\"transform\":\"NONE\",\"maxLength\":12},{\"id\":\"s4\",\"field\":\"TURNO\",\"kind\":\"TEXT\",\"transform\":\"NONE\",\"maxLength\":6},{\"id\":\"s5\",\"field\":\"EAN\",\"kind\":\"EAN13\",\"transform\":\"GS1_DATA\",\"maxLength\":12},{\"id\":\"s6\",\"field\":\"EAN8\",\"kind\":\"EAN8\",\"transform\":\"GS1_DATA\",\"maxLength\":7},{\"id\":\"s7\",\"field\":\"UPC\",\"kind\":\"UPCA\",\"transform\":\"GS1_DATA\",\"maxLength\":11},{\"id\":\"s8\",\"field\":\"SKU\",\"kind\":\"CODE128\",\"transform\":\"NONE\",\"maxLength\":8},{\"id\":\"s9\",\"field\":\"SKU\",\"kind\":\"QR\",\"transform\":\"NONE\",\"maxLength\":12},{\"id\":\"s10\",\"field\":\"LOTE\",\"kind\":\"QR\",\"transform\":\"NONE\",\"maxLength\":12}],\"conformance\":[{\"values\":{\"LOTE\":\"L-001\",\"TURNO\":\"Manhã\",\"DESC\":\"Picanha\",\"EAN\":\"7891234567895\",\"EAN8\":\"12345670\",\"UPC\":\"036000291452\",\"SKU\":\"PIC-0001\"},\"copies\":1,\"bytesSha256\":\"9e27a95089e971bdf78010e50b7abf2c508214eb76c81d734c6302a37c1e6639\"},{\"values\":{\"LOTE\":\"Ação \\\"ç\\\"\",\"TURNO\":\"Ação \\\"\",\"DESC\":\"Ação \\\"ç\\\" ^~_\",\"EAN\":\"200000000001\",\"EAN8\":\"7654321\",\"UPC\":\"03600029145\",\"SKU\":\"A\\\"^~_\\\\b \"},\"copies\":3,\"bytesSha256\":\"169411acaefa3e60275df894eef1faeec4b678341931cb53a8ecbd9854765b0f\"}]},{\"language\":\"TSPL\",\"dpi\":203,\"segments\":[{\"lit\":\"SIZE 80 mm,50 mm\\r\\nCODEPAGE 1252\\r\\nCLS\\r\\nBLOCK 16,14,400,28,\\\"0\\\",0,9,9,0,1,\\\"Açougue & Cia \\\\[\\\"]Centro\\\\[\\\"]\\\"\\r\\nBLOCK 16,54,480,28,\\\"0\\\",0,9,9,0,1,\\\"Lote \"},{\"slot\":\"s1\"},{\"lit\":\" / \"},{\"slot\":\"s2\"},{\"lit\":\"\\\"\\r\\nBLOCK 16,96,360,32,\\\"0\\\",0,10,10,0,2,\\\"\"},{\"slot\":\"s3\"},{\"lit\":\"\\\"\\r\\nBLOCK 597,40,160,28,\\\"0\\\",90,9,9,0,1,\\\"\"},{\"slot\":\"s4\"},{\"lit\":\"\\\"\\r\\nBARCODE 32,144,\\\"EAN13\\\",72,1,0,3,3,\\\"\"},{\"slot\":\"s5\"},{\"lit\":\"\\\"\\r\\nBARCODE 400,144,\\\"EAN8\\\",56,1,0,2,2,\\\"\"},{\"slot\":\"s6\"},{\"lit\":\"\\\"\\r\\nBARCODE 400,240,\\\"UPCA\\\",80,0,0,2,2,\\\"\"},{\"slot\":\"s7\"},{\"lit\":\"\\\"\\r\\nBARCODE 16,256,\\\"128\\\",40,1,0,2,2,\\\"\"},{\"slot\":\"s8\"},{\"lit\":\"\\\"\\r\\nQRCODE 496,8,Q,2,A,0,\\\"https://ex.test/p/\"},{\"slot\":\"s9\"},{\"lit\":\"?l=\"},{\"slot\":\"s10\"},{\"lit\":\"\\\"\\r\\nBOX 4,4,635,396,2\\r\\nBITMAP 16,336,6,48,0,ÿñÀü\\u000fÿÿñÀü\\u000fÿÿñÀü\\u000fÿã8à\\u0001Çã8à\\u0001Çã8à\\u0001Ç\\u001f\\u0000\\u0003þ?\\u001f\\u0000\\u0003þ?\\u001f\\u0000\\u0003þ?\\u0000qøÿð\\u0007\\u0000qøÿð\\u0007\\u0000qøÿð\\u0007ü\\u000fÀãÿü\\u000fÀãÿü\\u000fÀãÿà\\u00008\\u001cÇà\\u00008\\u001cÇà\\u00008\\u001cÇ\\u0003þ\\u0000\\u0000p?\\u0003þ\\u0000\\u0000p?\\u0003þ\\u0000\\u0000p?ÿøü\\u000e\\u0007ÿøü\\u000e\\u0007ÿøü\\u000e\\u0007ãÀ\\u001fÿÿãÀ\\u001fÿÿãÀ\\u001fÿÿ\\u001c~8\\u0003ñÇ\\u001c~8\\u0003ñÇ\\u001c~8\\u0003ñÇ\\u0000p\\u0000ÿ?\\u0000p\\u0000ÿ?\\u0000p\\u0000ÿ?ü\\u0001øã\\u0007ü\\u0001øã\\u0007ü\\u0001øã\\u0007\\u001fÿÀ\\u001cqÿ\\u001fÿÀ\\u001cqÿ\\u001fÿÀ\\u001cqÿ\\u0003ð8\\u0000\\u000fÇ\\u0003ð8\\u0000\\u000fÇ\\u0003ð8\\u0000\\u000fÇÿ\\u0000ü\\u0000?ÿ\\u0000ü\\u0000?ÿ\\u0000ü\\u0000?àø\\u001fþ\\u0007àø\\u001fþ\\u0007àø\\u001fþ\\u0007\\r\\nPRINT 1,\"},{\"copies\":true},{\"lit\":\"\\r\\n\"}],\"slots\":[{\"id\":\"s1\",\"field\":\"LOTE\",\"kind\":\"TEXT\",\"transform\":\"NONE\",\"maxLength\":8},{\"id\":\"s2\",\"field\":\"TURNO\",\"kind\":\"TEXT\",\"transform\":\"NONE\",\"maxLength\":8},{\"id\":\"s3\",\"field\":\"DESC\",\"kind\":\"TEXT\",\"transform\":\"NONE\",\"maxLength\":12},{\"id\":\"s4\",\"field\":\"TURNO\",\"kind\":\"TEXT\",\"transform\":\"NONE\",\"maxLength\":6},{\"id\":\"s5\",\"field\":\"EAN\",\"kind\":\"EAN13\",\"transform\":\"GS1_DATA\",\"maxLength\":12},{\"id\":\"s6\",\"field\":\"EAN8\",\"kind\":\"EAN8\",\"transform\":\"GS1_DATA\",\"maxLength\":7},{\"id\":\"s7\",\"field\":\"UPC\",\"kind\":\"UPCA\",\"transform\":\"GS1_DATA\",\"maxLength\":11},{\"id\":\"s8\",\"field\":\"SKU\",\"kind\":\"CODE128\",\"transform\":\"NONE\",\"maxLength\":13},{\"id\":\"s9\",\"field\":\"SKU\",\"kind\":\"QR\",\"transform\":\"NONE\",\"maxLength\":32},{\"id\":\"s10\",\"field\":\"LOTE\",\"kind\":\"QR\",\"transform\":\"NONE\",\"maxLength\":32}],\"conformance\":[{\"values\":{\"LOTE\":\"L-001\",\"TURNO\":\"Manhã\",\"DESC\":\"Picanha\",\"EAN\":\"7891234567895\",\"EAN8\":\"12345670\",\"UPC\":\"036000291452\",\"SKU\":\"PIC-0001\"},\"copies\":1,\"bytesSha256\":\"7744213307b0f7d920c99984312885bebb7a737871ccde8bbd1628a5313daf2c\"},{\"values\":{\"LOTE\":\"Ação \\\"ç\\\"\",\"TURNO\":\"Ação \\\"\",\"DESC\":\"Ação \\\"ç\\\" ^~_\",\"EAN\":\"200000000001\",\"EAN8\":\"7654321\",\"UPC\":\"03600029145\",\"SKU\":\"A\\\"^~_\\\\b 9\"},\"copies\":3,\"bytesSha256\":\"472f20bdc71afff840eadc7615eaf1784b7d176b4bdc8f18d52abd2f5bde35ac\"}]},{\"language\":\"TSPL\",\"dpi\":300,\"segments\":[{\"lit\":\"SIZE 80 mm,50 mm\\r\\nCODEPAGE 1252\\r\\nCLS\\r\\nBLOCK 24,21,591,41,\\\"0\\\",0,9,9,0,1,\\\"Açougue & Cia \\\\[\\\"]Centro\\\\[\\\"]\\\"\\r\\nBLOCK 24,80,709,41,\\\"0\\\",0,9,9,0,1,\\\"Lote \"},{\"slot\":\"s1\"},{\"lit\":\" / \"},{\"slot\":\"s2\"},{\"lit\":\"\\\"\\r\\nBLOCK 24,142,531,48,\\\"0\\\",0,10,10,0,2,\\\"\"},{\"slot\":\"s3\"},{\"lit\":\"\\\"\\r\\nBLOCK 883,59,236,41,\\\"0\\\",90,9,9,0,1,\\\"\"},{\"slot\":\"s4\"},{\"lit\":\"\\\"\\r\\nBARCODE 47,213,\\\"EAN13\\\",106,1,0,4,4,\\\"\"},{\"slot\":\"s5\"},{\"lit\":\"\\\"\\r\\nBARCODE 591,213,\\\"EAN8\\\",83,1,0,4,4,\\\"\"},{\"slot\":\"s6\"},{\"lit\":\"\\\"\\r\\nBARCODE 591,354,\\\"UPCA\\\",118,0,0,3,3,\\\"\"},{\"slot\":\"s7\"},{\"lit\":\"\\\"\\r\\nBARCODE 24,378,\\\"128\\\",59,1,0,4,4,\\\"\"},{\"slot\":\"s8\"},{\"lit\":\"\\\"\\r\\nQRCODE 732,12,Q,4,A,0,\\\"https://ex.test/p/\"},{\"slot\":\"s9\"},{\"lit\":\"?l=\"},{\"slot\":\"s10\"},{\"lit\":\"\\\"\\r\\nBOX 6,6,939,585,4\\r\\nBITMAP 24,496,9,71,0,ÿÿÁà\\u000fø\\u0003ÿÿÿÿÁà\\u000fø\\u0003ÿÿÿÿÁà\\u000fø\\u0003ÿÿÿÿÁà\\u000fø\\u0003ÿÿÿÿÁà\\u000fø\\u0003ÿÿø|>\\u001f\\u000f\\u0000\\u0000>\\u001fø|>\\u001f\\u000f\\u0000\\u0000>\\u001fø|>\\u001f\\u000f\\u0000\\u0000>\\u001fø|>\\u001f\\u000f\\u0000\\u0000>\\u001f\\u0007ü\\u0000\\u0000\\u0000\\u0007ÿÁÿ\\u0007ü\\u0000\\u0000\\u0000\\u0007ÿÁÿ\\u0007ü\\u0000\\u0000\\u0000\\u0007ÿÁÿ\\u0007ü\\u0000\\u0000\\u0000\\u0007ÿÁÿ\\u0007ü\\u0000\\u0000\\u0000\\u0007ÿÁÿ\\u0000\\u0003Áÿ\\u000fÿü\\u0000\\u001f\\u0000\\u0003Áÿ\\u000fÿü\\u0000\\u001f\\u0000\\u0003Áÿ\\u000fÿü\\u0000\\u001f\\u0000\\u0003Áÿ\\u000fÿü\\u0000\\u001fÿ?à\\u000f\\u0007?ÿÿ?à\\u000f\\u0007?ÿÿ?à\\u000f\\u0007?ÿÿ?à\\u000f\\u0007?ÿÿ?à\\u000f\\u0007?ÿø\\u0000\\u0000\\u001f\\u0000øþ\\u001fø\\u0000\\u0000\\u001f\\u0000øþ\\u001fø\\u0000\\u0000\\u001f\\u0000øþ\\u001fø\\u0000\\u0000\\u001f\\u0000øþ\\u001f\\u0000þ\\u0000\\u0000\\u0000|\\u0001ÿ\\u0000þ\\u0000\\u0000\\u0000|\\u0001ÿ\\u0000þ\\u0000\\u0000\\u0000|\\u0001ÿ\\u0000þ\\u0000\\u0000\\u0000|\\u0001ÿ\\u0000þ\\u0000\\u0000\\u0000|\\u0001ÿÿü?ÿ\\u000fø\\u0003À\\u001fÿü?ÿ\\u000fø\\u0003À\\u001fÿü?ÿ\\u000fø\\u0003À\\u001fÿü?ÿ\\u000fø\\u0003À\\u001fø|\\u0001à\\u0000ÿÿÿÿø|\\u0001à\\u0000ÿÿÿÿø|\\u0001à\\u0000ÿÿÿÿø|\\u0001à\\u0000ÿÿÿÿ\\u0007þ\\u001f\\u0000\\u0007ü>\\u001f\\u0007þ\\u001f\\u0000\\u0007ü>\\u001f\\u0007þ\\u001f\\u0000\\u0007ü>\\u001f\\u0007þ\\u001f\\u0000\\u0007ü>\\u001f\\u0007þ\\u001f\\u0000\\u0007ü>\\u001f\\u0000\\u0003À\\u0000\\u000fÿÁÿ\\u0000\\u0003À\\u0000\\u000fÿÁÿ\\u0000\\u0003À\\u0000\\u000fÿÁÿ\\u0000\\u0003À\\u0000\\u000fÿÁÿÿ\\u0001ÿ\\u000f\\u0007\\u0000\\u001fÿ\\u0001ÿ\\u000f\\u0007\\u0000\\u001fÿ\\u0001ÿ\\u000f\\u0007\\u0000\\u001fÿ\\u0001ÿ\\u000f\\u0007\\u0000\\u001fÿ\\u0001ÿ\\u000f\\u0007\\u0000\\u001f\\u0007ÿÿà\\u0000ø|?ÿ\\u0007ÿÿà\\u0000ø|?ÿ\\u0007ÿÿà\\u0000ø|?ÿ\\u0007ÿÿà\\u0000ø|?ÿ\\u0000À\\u001f\\u0000\\u0000\\u0003þ\\u001f\\u0000À\\u001f\\u0000\\u0000\\u0003þ\\u001f\\u0000À\\u001f\\u0000\\u0000\\u0003þ\\u001f\\u0000À\\u001f\\u0000\\u0000\\u0003þ\\u001f\\u0000À\\u001f\\u0000\\u0000\\u0003þ\\u001fÿü>\\u0000\\u000fø\\u0000\\u0001ÿÿü>\\u0000\\u000fø\\u0000\\u0001ÿÿü>\\u0000\\u000fø\\u0000\\u0001ÿÿü>\\u0000\\u000fø\\u0000\\u0001ÿø\\u0003ÿÿ\\u0000ÿÿÀ\\u001fø\\u0003ÿÿ\\u0000ÿÿÀ\\u001fø\\u0003ÿÿ\\u0000ÿÿÀ\\u001fø\\u0003ÿÿ\\u0000ÿÿÀ\\u001f\\r\\nPRINT 1,\"},{\"copies\":true},{\"lit\":\"\\r\\n\"}],\"slots\":[{\"id\":\"s1\",\"field\":\"LOTE\",\"kind\":\"TEXT\",\"transform\":\"NONE\",\"maxLength\":8},{\"id\":\"s2\",\"field\":\"TURNO\",\"kind\":\"TEXT\",\"transform\":\"NONE\",\"maxLength\":8},{\"id\":\"s3\",\"field\":\"DESC\",\"kind\":\"TEXT\",\"transform\":\"NONE\",\"maxLength\":12},{\"id\":\"s4\",\"field\":\"TURNO\",\"kind\":\"TEXT\",\"transform\":\"NONE\",\"maxLength\":6},{\"id\":\"s5\",\"field\":\"EAN\",\"kind\":\"EAN13\",\"transform\":\"GS1_DATA\",\"maxLength\":12},{\"id\":\"s6\",\"field\":\"EAN8\",\"kind\":\"EAN8\",\"transform\":\"GS1_DATA\",\"maxLength\":7},{\"id\":\"s7\",\"field\":\"UPC\",\"kind\":\"UPCA\",\"transform\":\"GS1_DATA\",\"maxLength\":11},{\"id\":\"s8\",\"field\":\"SKU\",\"kind\":\"CODE128\",\"transform\":\"NONE\",\"maxLength\":8},{\"id\":\"s9\",\"field\":\"SKU\",\"kind\":\"QR\",\"transform\":\"NONE\",\"maxLength\":12},{\"id\":\"s10\",\"field\":\"LOTE\",\"kind\":\"QR\",\"transform\":\"NONE\",\"maxLength\":12}],\"conformance\":[{\"values\":{\"LOTE\":\"L-001\",\"TURNO\":\"Manhã\",\"DESC\":\"Picanha\",\"EAN\":\"7891234567895\",\"EAN8\":\"12345670\",\"UPC\":\"036000291452\",\"SKU\":\"PIC-0001\"},\"copies\":1,\"bytesSha256\":\"187f455ab153f0cb6fdf60332bd2f4c05ea4d4ac7212e3c53772541168631aeb\"},{\"values\":{\"LOTE\":\"Ação \\\"ç\\\"\",\"TURNO\":\"Ação \\\"\",\"DESC\":\"Ação \\\"ç\\\" ^~_\",\"EAN\":\"200000000001\",\"EAN8\":\"7654321\",\"UPC\":\"03600029145\",\"SKU\":\"A\\\"^~_\\\\b \"},\"copies\":3,\"bytesSha256\":\"29604fd291fd9c15b33b9e7e272c5699de09efcdeafe4ed6dd5269cb8c0f40c5\"}]}]}",
+  "packageSha256": "29f2043725e3301323a40cdb18e39a4afd11597cd34f5e68ade662f47db78d0f",
+  "signature": {
+   "alg": "ES256",
+   "kid": "athos-label-b3bccb9b3e424855",
+   "value": "MEUCIQCLsXgUBx5dWr3LHphnAp/LTmtkN4xJDvvLosnZjvu0fQIgXrn8WhorSNx6CzjSmtUM+eLd1fveZ+d3VkqdE2HeqTI="
+  }
+ },
+ "slots": [
+  {
+   "id": "a",
+   "field": "T",
+   "kind": "TEXT",
+   "transform": "NONE",
+   "maxLength": 10
+  },
+  {
+   "id": "b",
+   "field": "E13",
+   "kind": "EAN13",
+   "transform": "GS1_DATA",
+   "maxLength": 12
+  },
+  {
+   "id": "c",
+   "field": "E8",
+   "kind": "EAN8",
+   "transform": "GS1_DATA",
+   "maxLength": 7
+  },
+  {
+   "id": "d",
+   "field": "U",
+   "kind": "UPCA",
+   "transform": "GS1_DATA",
+   "maxLength": 11
+  },
+  {
+   "id": "e",
+   "field": "C",
+   "kind": "CODE128",
+   "transform": "NONE",
+   "maxLength": 12
+  },
+  {
+   "id": "f",
+   "field": "Q",
+   "kind": "QR",
+   "transform": "NONE",
+   "maxLength": 12
+  }
+ ],
+ "cases": [
+  {
+   "target": 0,
+   "values": {
+    "LOTE": "L-001",
+    "TURNO": "Manhã",
+    "DESC": "Picanha",
+    "EAN": "7891234567895",
+    "EAN8": "12345670",
+    "UPC": "036000291452",
+    "SKU": "PIC-0001"
+   },
+   "copies": 1,
+   "result": "cebe5dba9ce38985c84f7af4b93fca33899410e90a582991d548a2391c3a2097"
+  },
+  {
+   "target": 0,
+   "values": {
+    "LOTE": "ç^~_\\\"x",
+    "TURNO": "Noite",
+    "DESC": "Açaí \"€\" 1",
+    "EAN": "789123456789",
+    "EAN8": "7654321",
+    "UPC": "03600029145",
+    "SKU": " A\"^~_\\ "
+   },
+   "copies": 2,
+   "result": "2fa11c00ae59a999b270a1b1e8b05eb4095073cdf20bb0f695f1ecaecf30cd08"
+  },
+  {
+   "target": 0,
+   "values": {
+    "LOTE": "😀",
+    "TURNO": "é",
+    "DESC": "ÀÉÎÕÜ ñ ß ÿ",
+    "EAN": " 7891234567895 ",
+    "EAN8": "1234 5670",
+    "UPC": "03600029145 2",
+    "SKU": "Z"
+   },
+   "copies": 3,
+   "result": "b79946163ba796fb017a889132f1ae0401a764306b22b4ef57118537e427b53d"
+  },
+  {
+   "target": 1,
+   "values": {
+    "LOTE": "L-001",
+    "TURNO": "Manhã",
+    "DESC": "Picanha",
+    "EAN": "7891234567895",
+    "EAN8": "12345670",
+    "UPC": "036000291452",
+    "SKU": "PIC-0001"
+   },
+   "copies": 1,
+   "result": "9e27a95089e971bdf78010e50b7abf2c508214eb76c81d734c6302a37c1e6639"
+  },
+  {
+   "target": 1,
+   "values": {
+    "LOTE": "ç^~_\\\"x",
+    "TURNO": "Noite",
+    "DESC": "Açaí \"€\" 1",
+    "EAN": "789123456789",
+    "EAN8": "7654321",
+    "UPC": "03600029145",
+    "SKU": " A\"^~_\\ "
+   },
+   "copies": 2,
+   "result": "34205dc9aca26ee301c53d870670a1a891343680a1eac673f11086fd209fb246"
+  },
+  {
+   "target": 1,
+   "values": {
+    "LOTE": "😀",
+    "TURNO": "é",
+    "DESC": "ÀÉÎÕÜ ñ ß ÿ",
+    "EAN": " 7891234567895 ",
+    "EAN8": "1234 5670",
+    "UPC": "03600029145 2",
+    "SKU": "Z"
+   },
+   "copies": 3,
+   "result": "7759fb07d73f1dbcf460153a4af29ea608dacd612adaccbdc0b6fafa44f1a2c9"
+  },
+  {
+   "target": 2,
+   "values": {
+    "LOTE": "L-001",
+    "TURNO": "Manhã",
+    "DESC": "Picanha",
+    "EAN": "7891234567895",
+    "EAN8": "12345670",
+    "UPC": "036000291452",
+    "SKU": "PIC-0001"
+   },
+   "copies": 1,
+   "result": "7744213307b0f7d920c99984312885bebb7a737871ccde8bbd1628a5313daf2c"
+  },
+  {
+   "target": 2,
+   "values": {
+    "LOTE": "ç^~_\\\"x",
+    "TURNO": "Noite",
+    "DESC": "Açaí \"€\" 1",
+    "EAN": "789123456789",
+    "EAN8": "7654321",
+    "UPC": "03600029145",
+    "SKU": " A\"^~_\\ "
+   },
+   "copies": 2,
+   "result": "a34c9b27fa6979a35db913c05946e43b5a03ffe6d918f7350dfc0cad8a82217d"
+  },
+  {
+   "target": 2,
+   "values": {
+    "LOTE": "😀",
+    "TURNO": "é",
+    "DESC": "ÀÉÎÕÜ ñ ß ÿ",
+    "EAN": " 7891234567895 ",
+    "EAN8": "1234 5670",
+    "UPC": "03600029145 2",
+    "SKU": "Z"
+   },
+   "copies": 3,
+   "result": "INVALID:LOTE"
+  },
+  {
+   "target": 3,
+   "values": {
+    "LOTE": "L-001",
+    "TURNO": "Manhã",
+    "DESC": "Picanha",
+    "EAN": "7891234567895",
+    "EAN8": "12345670",
+    "UPC": "036000291452",
+    "SKU": "PIC-0001"
+   },
+   "copies": 1,
+   "result": "187f455ab153f0cb6fdf60332bd2f4c05ea4d4ac7212e3c53772541168631aeb"
+  },
+  {
+   "target": 3,
+   "values": {
+    "LOTE": "ç^~_\\\"x",
+    "TURNO": "Noite",
+    "DESC": "Açaí \"€\" 1",
+    "EAN": "789123456789",
+    "EAN8": "7654321",
+    "UPC": "03600029145",
+    "SKU": " A\"^~_\\ "
+   },
+   "copies": 2,
+   "result": "5d6d6edebb6a85f6c990437f081669eaf19b3e9ad992fb4c3c0bc165fdd4a7c2"
+  },
+  {
+   "target": 3,
+   "values": {
+    "LOTE": "😀",
+    "TURNO": "é",
+    "DESC": "ÀÉÎÕÜ ñ ß ÿ",
+    "EAN": " 7891234567895 ",
+    "EAN8": "1234 5670",
+    "UPC": "03600029145 2",
+    "SKU": "Z"
+   },
+   "copies": 3,
+   "result": "INVALID:LOTE"
+  }
+ ],
+ "slotCases": [
+  {
+   "slot": "a",
+   "language": "ZPL",
+   "value": "",
+   "result": "MISSING"
+  },
+  {
+   "slot": "a",
+   "language": "ZPL",
+   "value": "abc",
+   "result": "OK:abc"
+  },
+  {
+   "slot": "a",
+   "language": "ZPL",
+   "value": "ação",
+   "result": "OK:ação"
+  },
+  {
+   "slot": "a",
+   "language": "ZPL",
+   "value": "á",
+   "result": "OK:á"
+  },
+  {
+   "slot": "a",
+   "language": "ZPL",
+   "value": "́a",
+   "result": "OK:́a"
+  },
+  {
+   "slot": "a",
+   "language": "ZPL",
+   "value": "xxxxxxxxxx",
+   "result": "OK:xxxxxxxxxx"
+  },
+  {
+   "slot": "a",
+   "language": "ZPL",
+   "value": "xxxxxxxxxxx",
+   "result": "INVALID"
+  },
+  {
+   "slot": "a",
+   "language": "ZPL",
+   "value": "a^b~c_d\\e",
+   "result": "OK:a_5Eb_7Ec_5Fd_5Ce"
+  },
+  {
+   "slot": "a",
+   "language": "ZPL",
+   "value": "diz \"oi\"",
+   "result": "OK:diz \"oi\""
+  },
+  {
+   "slot": "a",
+   "language": "ZPL",
+   "value": "€‚ƒ„…†‡ˆ‰Š‹ŒŽ",
+   "result": "INVALID"
+  },
+  {
+   "slot": "a",
+   "language": "ZPL",
+   "value": "seta →",
+   "result": "OK:seta →"
+  },
+  {
+   "slot": "a",
+   "language": "ZPL",
+   "value": "tab\tx",
+   "result": "INVALID"
+  },
+  {
+   "slot": "a",
+   "language": "ZPL",
+   "value": "del",
+   "result": "INVALID"
+  },
+  {
+   "slot": "a",
+   "language": "ZPL",
+   "value": "c1",
+   "result": "OK:c1"
+  },
+  {
+   "slot": "a",
+   "language": "ZPL",
+   "value": "😀😀",
+   "result": "OK:😀😀"
+  },
+  {
+   "slot": "a",
+   "language": "ZPL",
+   "value": "a\ud800b",
+   "result": "INVALID"
+  },
+  {
+   "slot": "a",
+   "language": "ZPL",
+   "value": " 789123456789 ",
+   "result": "INVALID"
+  },
+  {
+   "slot": "a",
+   "language": "ZPL",
+   "value": "7891234567895",
+   "result": "INVALID"
+  },
+  {
+   "slot": "a",
+   "language": "ZPL",
+   "value": "7891234567890",
+   "result": "INVALID"
+  },
+  {
+   "slot": "a",
+   "language": "ZPL",
+   "value": "789123456789",
+   "result": "INVALID"
+  },
+  {
+   "slot": "a",
+   "language": "ZPL",
+   "value": " 7891234567895 ",
+   "result": "INVALID"
+  },
+  {
+   "slot": "a",
+   "language": "ZPL",
+   "value": "1234567",
+   "result": "OK:1234567"
+  },
+  {
+   "slot": "a",
+   "language": "ZPL",
+   "value": "12345670",
+   "result": "OK:12345670"
+  },
+  {
+   "slot": "a",
+   "language": "ZPL",
+   "value": "12345678",
+   "result": "OK:12345678"
+  },
+  {
+   "slot": "a",
+   "language": "ZPL",
+   "value": "03600029145",
+   "result": "INVALID"
+  },
+  {
+   "slot": "a",
+   "language": "ZPL",
+   "value": "036000291452",
+   "result": "INVALID"
+  },
+  {
+   "slot": "a",
+   "language": "ZPL",
+   "value": "036000291453",
+   "result": "INVALID"
+  },
+  {
+   "slot": "a",
+   "language": "ZPL",
+   "value": "ÿ",
+   "result": "OK:ÿ"
+  },
+  {
+   "slot": "a",
+   "language": "ZPL",
+   "value": "çççç",
+   "result": "OK:çççç"
+  },
+  {
+   "slot": "a",
+   "language": "ZPL",
+   "value": "ÇÃÇÃÇÃ",
+   "result": "OK:ÇÃÇÃÇÃ"
+  },
+  {
+   "slot": "a",
+   "language": "ZPL",
+   "value": " ",
+   "result": "OK: "
+  },
+  {
+   "slot": "a",
+   "language": "ZPL",
+   "value": "Ω",
+   "result": "OK:Ω"
+  },
+  {
+   "slot": "a",
+   "language": "ZPL",
+   "value": "ß",
+   "result": "OK:ß"
+  },
+  {
+   "slot": "a",
+   "language": "ZPL",
+   "value": "١٢٣",
+   "result": "OK:١٢٣"
+  },
+  {
+   "slot": "a",
+   "language": "TSPL",
+   "value": "",
+   "result": "MISSING"
+  },
+  {
+   "slot": "a",
+   "language": "TSPL",
+   "value": "abc",
+   "result": "OK:abc"
+  },
+  {
+   "slot": "a",
+   "language": "TSPL",
+   "value": "ação",
+   "result": "OK:ação"
+  },
+  {
+   "slot": "a",
+   "language": "TSPL",
+   "value": "á",
+   "result": "OK:á"
+  },
+  {
+   "slot": "a",
+   "language": "TSPL",
+   "value": "́a",
+   "result": "INVALID"
+  },
+  {
+   "slot": "a",
+   "language": "TSPL",
+   "value": "xxxxxxxxxx",
+   "result": "OK:xxxxxxxxxx"
+  },
+  {
+   "slot": "a",
+   "language": "TSPL",
+   "value": "xxxxxxxxxxx",
+   "result": "INVALID"
+  },
+  {
+   "slot": "a",
+   "language": "TSPL",
+   "value": "a^b~c_d\\e",
+   "result": "OK:a^b~c_d\\e"
+  },
+  {
+   "slot": "a",
+   "language": "TSPL",
+   "value": "diz \"oi\"",
+   "result": "OK:diz \\[\"]oi\\[\"]"
+  },
+  {
+   "slot": "a",
+   "language": "TSPL",
+   "value": "€‚ƒ„…†‡ˆ‰Š‹ŒŽ",
+   "result": "INVALID"
+  },
+  {
+   "slot": "a",
+   "language": "TSPL",
+   "value": "seta →",
+   "result": "INVALID"
+  },
+  {
+   "slot": "a",
+   "language": "TSPL",
+   "value": "tab\tx",
+   "result": "INVALID"
+  },
+  {
+   "slot": "a",
+   "language": "TSPL",
+   "value": "del",
+   "result": "INVALID"
+  },
+  {
+   "slot": "a",
+   "language": "TSPL",
+   "value": "c1",
+   "result": "INVALID"
+  },
+  {
+   "slot": "a",
+   "language": "TSPL",
+   "value": "😀😀",
+   "result": "INVALID"
+  },
+  {
+   "slot": "a",
+   "language": "TSPL",
+   "value": "a\ud800b",
+   "result": "INVALID"
+  },
+  {
+   "slot": "a",
+   "language": "TSPL",
+   "value": " 789123456789 ",
+   "result": "INVALID"
+  },
+  {
+   "slot": "a",
+   "language": "TSPL",
+   "value": "7891234567895",
+   "result": "INVALID"
+  },
+  {
+   "slot": "a",
+   "language": "TSPL",
+   "value": "7891234567890",
+   "result": "INVALID"
+  },
+  {
+   "slot": "a",
+   "language": "TSPL",
+   "value": "789123456789",
+   "result": "INVALID"
+  },
+  {
+   "slot": "a",
+   "language": "TSPL",
+   "value": " 7891234567895 ",
+   "result": "INVALID"
+  },
+  {
+   "slot": "a",
+   "language": "TSPL",
+   "value": "1234567",
+   "result": "OK:1234567"
+  },
+  {
+   "slot": "a",
+   "language": "TSPL",
+   "value": "12345670",
+   "result": "OK:12345670"
+  },
+  {
+   "slot": "a",
+   "language": "TSPL",
+   "value": "12345678",
+   "result": "OK:12345678"
+  },
+  {
+   "slot": "a",
+   "language": "TSPL",
+   "value": "03600029145",
+   "result": "INVALID"
+  },
+  {
+   "slot": "a",
+   "language": "TSPL",
+   "value": "036000291452",
+   "result": "INVALID"
+  },
+  {
+   "slot": "a",
+   "language": "TSPL",
+   "value": "036000291453",
+   "result": "INVALID"
+  },
+  {
+   "slot": "a",
+   "language": "TSPL",
+   "value": "ÿ",
+   "result": "OK:ÿ"
+  },
+  {
+   "slot": "a",
+   "language": "TSPL",
+   "value": "çççç",
+   "result": "OK:çççç"
+  },
+  {
+   "slot": "a",
+   "language": "TSPL",
+   "value": "ÇÃÇÃÇÃ",
+   "result": "OK:ÇÃÇÃÇÃ"
+  },
+  {
+   "slot": "a",
+   "language": "TSPL",
+   "value": " ",
+   "result": "OK: "
+  },
+  {
+   "slot": "a",
+   "language": "TSPL",
+   "value": "Ω",
+   "result": "INVALID"
+  },
+  {
+   "slot": "a",
+   "language": "TSPL",
+   "value": "ß",
+   "result": "OK:ß"
+  },
+  {
+   "slot": "a",
+   "language": "TSPL",
+   "value": "١٢٣",
+   "result": "INVALID"
+  },
+  {
+   "slot": "b",
+   "language": "ZPL",
+   "value": "",
+   "result": "MISSING"
+  },
+  {
+   "slot": "b",
+   "language": "ZPL",
+   "value": "abc",
+   "result": "INVALID"
+  },
+  {
+   "slot": "b",
+   "language": "ZPL",
+   "value": "ação",
+   "result": "INVALID"
+  },
+  {
+   "slot": "b",
+   "language": "ZPL",
+   "value": "á",
+   "result": "INVALID"
+  },
+  {
+   "slot": "b",
+   "language": "ZPL",
+   "value": "́a",
+   "result": "INVALID"
+  },
+  {
+   "slot": "b",
+   "language": "ZPL",
+   "value": "xxxxxxxxxx",
+   "result": "INVALID"
+  },
+  {
+   "slot": "b",
+   "language": "ZPL",
+   "value": "xxxxxxxxxxx",
+   "result": "INVALID"
+  },
+  {
+   "slot": "b",
+   "language": "ZPL",
+   "value": "a^b~c_d\\e",
+   "result": "INVALID"
+  },
+  {
+   "slot": "b",
+   "language": "ZPL",
+   "value": "diz \"oi\"",
+   "result": "INVALID"
+  },
+  {
+   "slot": "b",
+   "language": "ZPL",
+   "value": "€‚ƒ„…†‡ˆ‰Š‹ŒŽ",
+   "result": "INVALID"
+  },
+  {
+   "slot": "b",
+   "language": "ZPL",
+   "value": "seta →",
+   "result": "INVALID"
+  },
+  {
+   "slot": "b",
+   "language": "ZPL",
+   "value": "tab\tx",
+   "result": "INVALID"
+  },
+  {
+   "slot": "b",
+   "language": "ZPL",
+   "value": "del",
+   "result": "INVALID"
+  },
+  {
+   "slot": "b",
+   "language": "ZPL",
+   "value": "c1",
+   "result": "INVALID"
+  },
+  {
+   "slot": "b",
+   "language": "ZPL",
+   "value": "😀😀",
+   "result": "INVALID"
+  },
+  {
+   "slot": "b",
+   "language": "ZPL",
+   "value": "a\ud800b",
+   "result": "INVALID"
+  },
+  {
+   "slot": "b",
+   "language": "ZPL",
+   "value": " 789123456789 ",
+   "result": "OK:789123456789"
+  },
+  {
+   "slot": "b",
+   "language": "ZPL",
+   "value": "7891234567895",
+   "result": "OK:789123456789"
+  },
+  {
+   "slot": "b",
+   "language": "ZPL",
+   "value": "7891234567890",
+   "result": "INVALID"
+  },
+  {
+   "slot": "b",
+   "language": "ZPL",
+   "value": "789123456789",
+   "result": "OK:789123456789"
+  },
+  {
+   "slot": "b",
+   "language": "ZPL",
+   "value": " 7891234567895 ",
+   "result": "OK:789123456789"
+  },
+  {
+   "slot": "b",
+   "language": "ZPL",
+   "value": "1234567",
+   "result": "INVALID"
+  },
+  {
+   "slot": "b",
+   "language": "ZPL",
+   "value": "12345670",
+   "result": "INVALID"
+  },
+  {
+   "slot": "b",
+   "language": "ZPL",
+   "value": "12345678",
+   "result": "INVALID"
+  },
+  {
+   "slot": "b",
+   "language": "ZPL",
+   "value": "03600029145",
+   "result": "INVALID"
+  },
+  {
+   "slot": "b",
+   "language": "ZPL",
+   "value": "036000291452",
+   "result": "OK:036000291452"
+  },
+  {
+   "slot": "b",
+   "language": "ZPL",
+   "value": "036000291453",
+   "result": "OK:036000291453"
+  },
+  {
+   "slot": "b",
+   "language": "ZPL",
+   "value": "ÿ",
+   "result": "INVALID"
+  },
+  {
+   "slot": "b",
+   "language": "ZPL",
+   "value": "çççç",
+   "result": "INVALID"
+  },
+  {
+   "slot": "b",
+   "language": "ZPL",
+   "value": "ÇÃÇÃÇÃ",
+   "result": "INVALID"
+  },
+  {
+   "slot": "b",
+   "language": "ZPL",
+   "value": " ",
+   "result": "INVALID"
+  },
+  {
+   "slot": "b",
+   "language": "ZPL",
+   "value": "Ω",
+   "result": "INVALID"
+  },
+  {
+   "slot": "b",
+   "language": "ZPL",
+   "value": "ß",
+   "result": "INVALID"
+  },
+  {
+   "slot": "b",
+   "language": "ZPL",
+   "value": "١٢٣",
+   "result": "INVALID"
+  },
+  {
+   "slot": "b",
+   "language": "TSPL",
+   "value": "",
+   "result": "MISSING"
+  },
+  {
+   "slot": "b",
+   "language": "TSPL",
+   "value": "abc",
+   "result": "INVALID"
+  },
+  {
+   "slot": "b",
+   "language": "TSPL",
+   "value": "ação",
+   "result": "INVALID"
+  },
+  {
+   "slot": "b",
+   "language": "TSPL",
+   "value": "á",
+   "result": "INVALID"
+  },
+  {
+   "slot": "b",
+   "language": "TSPL",
+   "value": "́a",
+   "result": "INVALID"
+  },
+  {
+   "slot": "b",
+   "language": "TSPL",
+   "value": "xxxxxxxxxx",
+   "result": "INVALID"
+  },
+  {
+   "slot": "b",
+   "language": "TSPL",
+   "value": "xxxxxxxxxxx",
+   "result": "INVALID"
+  },
+  {
+   "slot": "b",
+   "language": "TSPL",
+   "value": "a^b~c_d\\e",
+   "result": "INVALID"
+  },
+  {
+   "slot": "b",
+   "language": "TSPL",
+   "value": "diz \"oi\"",
+   "result": "INVALID"
+  },
+  {
+   "slot": "b",
+   "language": "TSPL",
+   "value": "€‚ƒ„…†‡ˆ‰Š‹ŒŽ",
+   "result": "INVALID"
+  },
+  {
+   "slot": "b",
+   "language": "TSPL",
+   "value": "seta →",
+   "result": "INVALID"
+  },
+  {
+   "slot": "b",
+   "language": "TSPL",
+   "value": "tab\tx",
+   "result": "INVALID"
+  },
+  {
+   "slot": "b",
+   "language": "TSPL",
+   "value": "del",
+   "result": "INVALID"
+  },
+  {
+   "slot": "b",
+   "language": "TSPL",
+   "value": "c1",
+   "result": "INVALID"
+  },
+  {
+   "slot": "b",
+   "language": "TSPL",
+   "value": "😀😀",
+   "result": "INVALID"
+  },
+  {
+   "slot": "b",
+   "language": "TSPL",
+   "value": "a\ud800b",
+   "result": "INVALID"
+  },
+  {
+   "slot": "b",
+   "language": "TSPL",
+   "value": " 789123456789 ",
+   "result": "OK:789123456789"
+  },
+  {
+   "slot": "b",
+   "language": "TSPL",
+   "value": "7891234567895",
+   "result": "OK:789123456789"
+  },
+  {
+   "slot": "b",
+   "language": "TSPL",
+   "value": "7891234567890",
+   "result": "INVALID"
+  },
+  {
+   "slot": "b",
+   "language": "TSPL",
+   "value": "789123456789",
+   "result": "OK:789123456789"
+  },
+  {
+   "slot": "b",
+   "language": "TSPL",
+   "value": " 7891234567895 ",
+   "result": "OK:789123456789"
+  },
+  {
+   "slot": "b",
+   "language": "TSPL",
+   "value": "1234567",
+   "result": "INVALID"
+  },
+  {
+   "slot": "b",
+   "language": "TSPL",
+   "value": "12345670",
+   "result": "INVALID"
+  },
+  {
+   "slot": "b",
+   "language": "TSPL",
+   "value": "12345678",
+   "result": "INVALID"
+  },
+  {
+   "slot": "b",
+   "language": "TSPL",
+   "value": "03600029145",
+   "result": "INVALID"
+  },
+  {
+   "slot": "b",
+   "language": "TSPL",
+   "value": "036000291452",
+   "result": "OK:036000291452"
+  },
+  {
+   "slot": "b",
+   "language": "TSPL",
+   "value": "036000291453",
+   "result": "OK:036000291453"
+  },
+  {
+   "slot": "b",
+   "language": "TSPL",
+   "value": "ÿ",
+   "result": "INVALID"
+  },
+  {
+   "slot": "b",
+   "language": "TSPL",
+   "value": "çççç",
+   "result": "INVALID"
+  },
+  {
+   "slot": "b",
+   "language": "TSPL",
+   "value": "ÇÃÇÃÇÃ",
+   "result": "INVALID"
+  },
+  {
+   "slot": "b",
+   "language": "TSPL",
+   "value": " ",
+   "result": "INVALID"
+  },
+  {
+   "slot": "b",
+   "language": "TSPL",
+   "value": "Ω",
+   "result": "INVALID"
+  },
+  {
+   "slot": "b",
+   "language": "TSPL",
+   "value": "ß",
+   "result": "INVALID"
+  },
+  {
+   "slot": "b",
+   "language": "TSPL",
+   "value": "١٢٣",
+   "result": "INVALID"
+  },
+  {
+   "slot": "c",
+   "language": "ZPL",
+   "value": "",
+   "result": "MISSING"
+  },
+  {
+   "slot": "c",
+   "language": "ZPL",
+   "value": "abc",
+   "result": "INVALID"
+  },
+  {
+   "slot": "c",
+   "language": "ZPL",
+   "value": "ação",
+   "result": "INVALID"
+  },
+  {
+   "slot": "c",
+   "language": "ZPL",
+   "value": "á",
+   "result": "INVALID"
+  },
+  {
+   "slot": "c",
+   "language": "ZPL",
+   "value": "́a",
+   "result": "INVALID"
+  },
+  {
+   "slot": "c",
+   "language": "ZPL",
+   "value": "xxxxxxxxxx",
+   "result": "INVALID"
+  },
+  {
+   "slot": "c",
+   "language": "ZPL",
+   "value": "xxxxxxxxxxx",
+   "result": "INVALID"
+  },
+  {
+   "slot": "c",
+   "language": "ZPL",
+   "value": "a^b~c_d\\e",
+   "result": "INVALID"
+  },
+  {
+   "slot": "c",
+   "language": "ZPL",
+   "value": "diz \"oi\"",
+   "result": "INVALID"
+  },
+  {
+   "slot": "c",
+   "language": "ZPL",
+   "value": "€‚ƒ„…†‡ˆ‰Š‹ŒŽ",
+   "result": "INVALID"
+  },
+  {
+   "slot": "c",
+   "language": "ZPL",
+   "value": "seta →",
+   "result": "INVALID"
+  },
+  {
+   "slot": "c",
+   "language": "ZPL",
+   "value": "tab\tx",
+   "result": "INVALID"
+  },
+  {
+   "slot": "c",
+   "language": "ZPL",
+   "value": "del",
+   "result": "INVALID"
+  },
+  {
+   "slot": "c",
+   "language": "ZPL",
+   "value": "c1",
+   "result": "INVALID"
+  },
+  {
+   "slot": "c",
+   "language": "ZPL",
+   "value": "😀😀",
+   "result": "INVALID"
+  },
+  {
+   "slot": "c",
+   "language": "ZPL",
+   "value": "a\ud800b",
+   "result": "INVALID"
+  },
+  {
+   "slot": "c",
+   "language": "ZPL",
+   "value": " 789123456789 ",
+   "result": "INVALID"
+  },
+  {
+   "slot": "c",
+   "language": "ZPL",
+   "value": "7891234567895",
+   "result": "INVALID"
+  },
+  {
+   "slot": "c",
+   "language": "ZPL",
+   "value": "7891234567890",
+   "result": "INVALID"
+  },
+  {
+   "slot": "c",
+   "language": "ZPL",
+   "value": "789123456789",
+   "result": "INVALID"
+  },
+  {
+   "slot": "c",
+   "language": "ZPL",
+   "value": " 7891234567895 ",
+   "result": "INVALID"
+  },
+  {
+   "slot": "c",
+   "language": "ZPL",
+   "value": "1234567",
+   "result": "OK:1234567"
+  },
+  {
+   "slot": "c",
+   "language": "ZPL",
+   "value": "12345670",
+   "result": "OK:1234567"
+  },
+  {
+   "slot": "c",
+   "language": "ZPL",
+   "value": "12345678",
+   "result": "INVALID"
+  },
+  {
+   "slot": "c",
+   "language": "ZPL",
+   "value": "03600029145",
+   "result": "INVALID"
+  },
+  {
+   "slot": "c",
+   "language": "ZPL",
+   "value": "036000291452",
+   "result": "INVALID"
+  },
+  {
+   "slot": "c",
+   "language": "ZPL",
+   "value": "036000291453",
+   "result": "INVALID"
+  },
+  {
+   "slot": "c",
+   "language": "ZPL",
+   "value": "ÿ",
+   "result": "INVALID"
+  },
+  {
+   "slot": "c",
+   "language": "ZPL",
+   "value": "çççç",
+   "result": "INVALID"
+  },
+  {
+   "slot": "c",
+   "language": "ZPL",
+   "value": "ÇÃÇÃÇÃ",
+   "result": "INVALID"
+  },
+  {
+   "slot": "c",
+   "language": "ZPL",
+   "value": " ",
+   "result": "INVALID"
+  },
+  {
+   "slot": "c",
+   "language": "ZPL",
+   "value": "Ω",
+   "result": "INVALID"
+  },
+  {
+   "slot": "c",
+   "language": "ZPL",
+   "value": "ß",
+   "result": "INVALID"
+  },
+  {
+   "slot": "c",
+   "language": "ZPL",
+   "value": "١٢٣",
+   "result": "INVALID"
+  },
+  {
+   "slot": "c",
+   "language": "TSPL",
+   "value": "",
+   "result": "MISSING"
+  },
+  {
+   "slot": "c",
+   "language": "TSPL",
+   "value": "abc",
+   "result": "INVALID"
+  },
+  {
+   "slot": "c",
+   "language": "TSPL",
+   "value": "ação",
+   "result": "INVALID"
+  },
+  {
+   "slot": "c",
+   "language": "TSPL",
+   "value": "á",
+   "result": "INVALID"
+  },
+  {
+   "slot": "c",
+   "language": "TSPL",
+   "value": "́a",
+   "result": "INVALID"
+  },
+  {
+   "slot": "c",
+   "language": "TSPL",
+   "value": "xxxxxxxxxx",
+   "result": "INVALID"
+  },
+  {
+   "slot": "c",
+   "language": "TSPL",
+   "value": "xxxxxxxxxxx",
+   "result": "INVALID"
+  },
+  {
+   "slot": "c",
+   "language": "TSPL",
+   "value": "a^b~c_d\\e",
+   "result": "INVALID"
+  },
+  {
+   "slot": "c",
+   "language": "TSPL",
+   "value": "diz \"oi\"",
+   "result": "INVALID"
+  },
+  {
+   "slot": "c",
+   "language": "TSPL",
+   "value": "€‚ƒ„…†‡ˆ‰Š‹ŒŽ",
+   "result": "INVALID"
+  },
+  {
+   "slot": "c",
+   "language": "TSPL",
+   "value": "seta →",
+   "result": "INVALID"
+  },
+  {
+   "slot": "c",
+   "language": "TSPL",
+   "value": "tab\tx",
+   "result": "INVALID"
+  },
+  {
+   "slot": "c",
+   "language": "TSPL",
+   "value": "del",
+   "result": "INVALID"
+  },
+  {
+   "slot": "c",
+   "language": "TSPL",
+   "value": "c1",
+   "result": "INVALID"
+  },
+  {
+   "slot": "c",
+   "language": "TSPL",
+   "value": "😀😀",
+   "result": "INVALID"
+  },
+  {
+   "slot": "c",
+   "language": "TSPL",
+   "value": "a\ud800b",
+   "result": "INVALID"
+  },
+  {
+   "slot": "c",
+   "language": "TSPL",
+   "value": " 789123456789 ",
+   "result": "INVALID"
+  },
+  {
+   "slot": "c",
+   "language": "TSPL",
+   "value": "7891234567895",
+   "result": "INVALID"
+  },
+  {
+   "slot": "c",
+   "language": "TSPL",
+   "value": "7891234567890",
+   "result": "INVALID"
+  },
+  {
+   "slot": "c",
+   "language": "TSPL",
+   "value": "789123456789",
+   "result": "INVALID"
+  },
+  {
+   "slot": "c",
+   "language": "TSPL",
+   "value": " 7891234567895 ",
+   "result": "INVALID"
+  },
+  {
+   "slot": "c",
+   "language": "TSPL",
+   "value": "1234567",
+   "result": "OK:1234567"
+  },
+  {
+   "slot": "c",
+   "language": "TSPL",
+   "value": "12345670",
+   "result": "OK:1234567"
+  },
+  {
+   "slot": "c",
+   "language": "TSPL",
+   "value": "12345678",
+   "result": "INVALID"
+  },
+  {
+   "slot": "c",
+   "language": "TSPL",
+   "value": "03600029145",
+   "result": "INVALID"
+  },
+  {
+   "slot": "c",
+   "language": "TSPL",
+   "value": "036000291452",
+   "result": "INVALID"
+  },
+  {
+   "slot": "c",
+   "language": "TSPL",
+   "value": "036000291453",
+   "result": "INVALID"
+  },
+  {
+   "slot": "c",
+   "language": "TSPL",
+   "value": "ÿ",
+   "result": "INVALID"
+  },
+  {
+   "slot": "c",
+   "language": "TSPL",
+   "value": "çççç",
+   "result": "INVALID"
+  },
+  {
+   "slot": "c",
+   "language": "TSPL",
+   "value": "ÇÃÇÃÇÃ",
+   "result": "INVALID"
+  },
+  {
+   "slot": "c",
+   "language": "TSPL",
+   "value": " ",
+   "result": "INVALID"
+  },
+  {
+   "slot": "c",
+   "language": "TSPL",
+   "value": "Ω",
+   "result": "INVALID"
+  },
+  {
+   "slot": "c",
+   "language": "TSPL",
+   "value": "ß",
+   "result": "INVALID"
+  },
+  {
+   "slot": "c",
+   "language": "TSPL",
+   "value": "١٢٣",
+   "result": "INVALID"
+  },
+  {
+   "slot": "d",
+   "language": "ZPL",
+   "value": "",
+   "result": "MISSING"
+  },
+  {
+   "slot": "d",
+   "language": "ZPL",
+   "value": "abc",
+   "result": "INVALID"
+  },
+  {
+   "slot": "d",
+   "language": "ZPL",
+   "value": "ação",
+   "result": "INVALID"
+  },
+  {
+   "slot": "d",
+   "language": "ZPL",
+   "value": "á",
+   "result": "INVALID"
+  },
+  {
+   "slot": "d",
+   "language": "ZPL",
+   "value": "́a",
+   "result": "INVALID"
+  },
+  {
+   "slot": "d",
+   "language": "ZPL",
+   "value": "xxxxxxxxxx",
+   "result": "INVALID"
+  },
+  {
+   "slot": "d",
+   "language": "ZPL",
+   "value": "xxxxxxxxxxx",
+   "result": "INVALID"
+  },
+  {
+   "slot": "d",
+   "language": "ZPL",
+   "value": "a^b~c_d\\e",
+   "result": "INVALID"
+  },
+  {
+   "slot": "d",
+   "language": "ZPL",
+   "value": "diz \"oi\"",
+   "result": "INVALID"
+  },
+  {
+   "slot": "d",
+   "language": "ZPL",
+   "value": "€‚ƒ„…†‡ˆ‰Š‹ŒŽ",
+   "result": "INVALID"
+  },
+  {
+   "slot": "d",
+   "language": "ZPL",
+   "value": "seta →",
+   "result": "INVALID"
+  },
+  {
+   "slot": "d",
+   "language": "ZPL",
+   "value": "tab\tx",
+   "result": "INVALID"
+  },
+  {
+   "slot": "d",
+   "language": "ZPL",
+   "value": "del",
+   "result": "INVALID"
+  },
+  {
+   "slot": "d",
+   "language": "ZPL",
+   "value": "c1",
+   "result": "INVALID"
+  },
+  {
+   "slot": "d",
+   "language": "ZPL",
+   "value": "😀😀",
+   "result": "INVALID"
+  },
+  {
+   "slot": "d",
+   "language": "ZPL",
+   "value": "a\ud800b",
+   "result": "INVALID"
+  },
+  {
+   "slot": "d",
+   "language": "ZPL",
+   "value": " 789123456789 ",
+   "result": "INVALID"
+  },
+  {
+   "slot": "d",
+   "language": "ZPL",
+   "value": "7891234567895",
+   "result": "INVALID"
+  },
+  {
+   "slot": "d",
+   "language": "ZPL",
+   "value": "7891234567890",
+   "result": "INVALID"
+  },
+  {
+   "slot": "d",
+   "language": "ZPL",
+   "value": "789123456789",
+   "result": "INVALID"
+  },
+  {
+   "slot": "d",
+   "language": "ZPL",
+   "value": " 7891234567895 ",
+   "result": "INVALID"
+  },
+  {
+   "slot": "d",
+   "language": "ZPL",
+   "value": "1234567",
+   "result": "INVALID"
+  },
+  {
+   "slot": "d",
+   "language": "ZPL",
+   "value": "12345670",
+   "result": "INVALID"
+  },
+  {
+   "slot": "d",
+   "language": "ZPL",
+   "value": "12345678",
+   "result": "INVALID"
+  },
+  {
+   "slot": "d",
+   "language": "ZPL",
+   "value": "03600029145",
+   "result": "OK:03600029145"
+  },
+  {
+   "slot": "d",
+   "language": "ZPL",
+   "value": "036000291452",
+   "result": "OK:03600029145"
+  },
+  {
+   "slot": "d",
+   "language": "ZPL",
+   "value": "036000291453",
+   "result": "INVALID"
+  },
+  {
+   "slot": "d",
+   "language": "ZPL",
+   "value": "ÿ",
+   "result": "INVALID"
+  },
+  {
+   "slot": "d",
+   "language": "ZPL",
+   "value": "çççç",
+   "result": "INVALID"
+  },
+  {
+   "slot": "d",
+   "language": "ZPL",
+   "value": "ÇÃÇÃÇÃ",
+   "result": "INVALID"
+  },
+  {
+   "slot": "d",
+   "language": "ZPL",
+   "value": " ",
+   "result": "INVALID"
+  },
+  {
+   "slot": "d",
+   "language": "ZPL",
+   "value": "Ω",
+   "result": "INVALID"
+  },
+  {
+   "slot": "d",
+   "language": "ZPL",
+   "value": "ß",
+   "result": "INVALID"
+  },
+  {
+   "slot": "d",
+   "language": "ZPL",
+   "value": "١٢٣",
+   "result": "INVALID"
+  },
+  {
+   "slot": "d",
+   "language": "TSPL",
+   "value": "",
+   "result": "MISSING"
+  },
+  {
+   "slot": "d",
+   "language": "TSPL",
+   "value": "abc",
+   "result": "INVALID"
+  },
+  {
+   "slot": "d",
+   "language": "TSPL",
+   "value": "ação",
+   "result": "INVALID"
+  },
+  {
+   "slot": "d",
+   "language": "TSPL",
+   "value": "á",
+   "result": "INVALID"
+  },
+  {
+   "slot": "d",
+   "language": "TSPL",
+   "value": "́a",
+   "result": "INVALID"
+  },
+  {
+   "slot": "d",
+   "language": "TSPL",
+   "value": "xxxxxxxxxx",
+   "result": "INVALID"
+  },
+  {
+   "slot": "d",
+   "language": "TSPL",
+   "value": "xxxxxxxxxxx",
+   "result": "INVALID"
+  },
+  {
+   "slot": "d",
+   "language": "TSPL",
+   "value": "a^b~c_d\\e",
+   "result": "INVALID"
+  },
+  {
+   "slot": "d",
+   "language": "TSPL",
+   "value": "diz \"oi\"",
+   "result": "INVALID"
+  },
+  {
+   "slot": "d",
+   "language": "TSPL",
+   "value": "€‚ƒ„…†‡ˆ‰Š‹ŒŽ",
+   "result": "INVALID"
+  },
+  {
+   "slot": "d",
+   "language": "TSPL",
+   "value": "seta →",
+   "result": "INVALID"
+  },
+  {
+   "slot": "d",
+   "language": "TSPL",
+   "value": "tab\tx",
+   "result": "INVALID"
+  },
+  {
+   "slot": "d",
+   "language": "TSPL",
+   "value": "del",
+   "result": "INVALID"
+  },
+  {
+   "slot": "d",
+   "language": "TSPL",
+   "value": "c1",
+   "result": "INVALID"
+  },
+  {
+   "slot": "d",
+   "language": "TSPL",
+   "value": "😀😀",
+   "result": "INVALID"
+  },
+  {
+   "slot": "d",
+   "language": "TSPL",
+   "value": "a\ud800b",
+   "result": "INVALID"
+  },
+  {
+   "slot": "d",
+   "language": "TSPL",
+   "value": " 789123456789 ",
+   "result": "INVALID"
+  },
+  {
+   "slot": "d",
+   "language": "TSPL",
+   "value": "7891234567895",
+   "result": "INVALID"
+  },
+  {
+   "slot": "d",
+   "language": "TSPL",
+   "value": "7891234567890",
+   "result": "INVALID"
+  },
+  {
+   "slot": "d",
+   "language": "TSPL",
+   "value": "789123456789",
+   "result": "INVALID"
+  },
+  {
+   "slot": "d",
+   "language": "TSPL",
+   "value": " 7891234567895 ",
+   "result": "INVALID"
+  },
+  {
+   "slot": "d",
+   "language": "TSPL",
+   "value": "1234567",
+   "result": "INVALID"
+  },
+  {
+   "slot": "d",
+   "language": "TSPL",
+   "value": "12345670",
+   "result": "INVALID"
+  },
+  {
+   "slot": "d",
+   "language": "TSPL",
+   "value": "12345678",
+   "result": "INVALID"
+  },
+  {
+   "slot": "d",
+   "language": "TSPL",
+   "value": "03600029145",
+   "result": "OK:03600029145"
+  },
+  {
+   "slot": "d",
+   "language": "TSPL",
+   "value": "036000291452",
+   "result": "OK:03600029145"
+  },
+  {
+   "slot": "d",
+   "language": "TSPL",
+   "value": "036000291453",
+   "result": "INVALID"
+  },
+  {
+   "slot": "d",
+   "language": "TSPL",
+   "value": "ÿ",
+   "result": "INVALID"
+  },
+  {
+   "slot": "d",
+   "language": "TSPL",
+   "value": "çççç",
+   "result": "INVALID"
+  },
+  {
+   "slot": "d",
+   "language": "TSPL",
+   "value": "ÇÃÇÃÇÃ",
+   "result": "INVALID"
+  },
+  {
+   "slot": "d",
+   "language": "TSPL",
+   "value": " ",
+   "result": "INVALID"
+  },
+  {
+   "slot": "d",
+   "language": "TSPL",
+   "value": "Ω",
+   "result": "INVALID"
+  },
+  {
+   "slot": "d",
+   "language": "TSPL",
+   "value": "ß",
+   "result": "INVALID"
+  },
+  {
+   "slot": "d",
+   "language": "TSPL",
+   "value": "١٢٣",
+   "result": "INVALID"
+  },
+  {
+   "slot": "e",
+   "language": "ZPL",
+   "value": "",
+   "result": "MISSING"
+  },
+  {
+   "slot": "e",
+   "language": "ZPL",
+   "value": "abc",
+   "result": "OK:abc"
+  },
+  {
+   "slot": "e",
+   "language": "ZPL",
+   "value": "ação",
+   "result": "INVALID"
+  },
+  {
+   "slot": "e",
+   "language": "ZPL",
+   "value": "á",
+   "result": "INVALID"
+  },
+  {
+   "slot": "e",
+   "language": "ZPL",
+   "value": "́a",
+   "result": "INVALID"
+  },
+  {
+   "slot": "e",
+   "language": "ZPL",
+   "value": "xxxxxxxxxx",
+   "result": "OK:xxxxxxxxxx"
+  },
+  {
+   "slot": "e",
+   "language": "ZPL",
+   "value": "xxxxxxxxxxx",
+   "result": "OK:xxxxxxxxxxx"
+  },
+  {
+   "slot": "e",
+   "language": "ZPL",
+   "value": "a^b~c_d\\e",
+   "result": "OK:a_5Eb_7Ec_5Fd_5Ce"
+  },
+  {
+   "slot": "e",
+   "language": "ZPL",
+   "value": "diz \"oi\"",
+   "result": "OK:diz \"oi\""
+  },
+  {
+   "slot": "e",
+   "language": "ZPL",
+   "value": "€‚ƒ„…†‡ˆ‰Š‹ŒŽ",
+   "result": "INVALID"
+  },
+  {
+   "slot": "e",
+   "language": "ZPL",
+   "value": "seta →",
+   "result": "INVALID"
+  },
+  {
+   "slot": "e",
+   "language": "ZPL",
+   "value": "tab\tx",
+   "result": "INVALID"
+  },
+  {
+   "slot": "e",
+   "language": "ZPL",
+   "value": "del",
+   "result": "INVALID"
+  },
+  {
+   "slot": "e",
+   "language": "ZPL",
+   "value": "c1",
+   "result": "INVALID"
+  },
+  {
+   "slot": "e",
+   "language": "ZPL",
+   "value": "😀😀",
+   "result": "INVALID"
+  },
+  {
+   "slot": "e",
+   "language": "ZPL",
+   "value": "a\ud800b",
+   "result": "INVALID"
+  },
+  {
+   "slot": "e",
+   "language": "ZPL",
+   "value": " 789123456789 ",
+   "result": "OK:789123456789"
+  },
+  {
+   "slot": "e",
+   "language": "ZPL",
+   "value": "7891234567895",
+   "result": "INVALID"
+  },
+  {
+   "slot": "e",
+   "language": "ZPL",
+   "value": "7891234567890",
+   "result": "INVALID"
+  },
+  {
+   "slot": "e",
+   "language": "ZPL",
+   "value": "789123456789",
+   "result": "OK:789123456789"
+  },
+  {
+   "slot": "e",
+   "language": "ZPL",
+   "value": " 7891234567895 ",
+   "result": "INVALID"
+  },
+  {
+   "slot": "e",
+   "language": "ZPL",
+   "value": "1234567",
+   "result": "OK:1234567"
+  },
+  {
+   "slot": "e",
+   "language": "ZPL",
+   "value": "12345670",
+   "result": "OK:12345670"
+  },
+  {
+   "slot": "e",
+   "language": "ZPL",
+   "value": "12345678",
+   "result": "OK:12345678"
+  },
+  {
+   "slot": "e",
+   "language": "ZPL",
+   "value": "03600029145",
+   "result": "OK:03600029145"
+  },
+  {
+   "slot": "e",
+   "language": "ZPL",
+   "value": "036000291452",
+   "result": "OK:036000291452"
+  },
+  {
+   "slot": "e",
+   "language": "ZPL",
+   "value": "036000291453",
+   "result": "OK:036000291453"
+  },
+  {
+   "slot": "e",
+   "language": "ZPL",
+   "value": "ÿ",
+   "result": "INVALID"
+  },
+  {
+   "slot": "e",
+   "language": "ZPL",
+   "value": "çççç",
+   "result": "INVALID"
+  },
+  {
+   "slot": "e",
+   "language": "ZPL",
+   "value": "ÇÃÇÃÇÃ",
+   "result": "INVALID"
+  },
+  {
+   "slot": "e",
+   "language": "ZPL",
+   "value": " ",
+   "result": "INVALID"
+  },
+  {
+   "slot": "e",
+   "language": "ZPL",
+   "value": "Ω",
+   "result": "INVALID"
+  },
+  {
+   "slot": "e",
+   "language": "ZPL",
+   "value": "ß",
+   "result": "INVALID"
+  },
+  {
+   "slot": "e",
+   "language": "ZPL",
+   "value": "١٢٣",
+   "result": "INVALID"
+  },
+  {
+   "slot": "e",
+   "language": "TSPL",
+   "value": "",
+   "result": "MISSING"
+  },
+  {
+   "slot": "e",
+   "language": "TSPL",
+   "value": "abc",
+   "result": "OK:abc"
+  },
+  {
+   "slot": "e",
+   "language": "TSPL",
+   "value": "ação",
+   "result": "INVALID"
+  },
+  {
+   "slot": "e",
+   "language": "TSPL",
+   "value": "á",
+   "result": "INVALID"
+  },
+  {
+   "slot": "e",
+   "language": "TSPL",
+   "value": "́a",
+   "result": "INVALID"
+  },
+  {
+   "slot": "e",
+   "language": "TSPL",
+   "value": "xxxxxxxxxx",
+   "result": "OK:xxxxxxxxxx"
+  },
+  {
+   "slot": "e",
+   "language": "TSPL",
+   "value": "xxxxxxxxxxx",
+   "result": "OK:xxxxxxxxxxx"
+  },
+  {
+   "slot": "e",
+   "language": "TSPL",
+   "value": "a^b~c_d\\e",
+   "result": "OK:a^b~c_d\\e"
+  },
+  {
+   "slot": "e",
+   "language": "TSPL",
+   "value": "diz \"oi\"",
+   "result": "OK:diz \\[\"]oi\\[\"]"
+  },
+  {
+   "slot": "e",
+   "language": "TSPL",
+   "value": "€‚ƒ„…†‡ˆ‰Š‹ŒŽ",
+   "result": "INVALID"
+  },
+  {
+   "slot": "e",
+   "language": "TSPL",
+   "value": "seta →",
+   "result": "INVALID"
+  },
+  {
+   "slot": "e",
+   "language": "TSPL",
+   "value": "tab\tx",
+   "result": "INVALID"
+  },
+  {
+   "slot": "e",
+   "language": "TSPL",
+   "value": "del",
+   "result": "INVALID"
+  },
+  {
+   "slot": "e",
+   "language": "TSPL",
+   "value": "c1",
+   "result": "INVALID"
+  },
+  {
+   "slot": "e",
+   "language": "TSPL",
+   "value": "😀😀",
+   "result": "INVALID"
+  },
+  {
+   "slot": "e",
+   "language": "TSPL",
+   "value": "a\ud800b",
+   "result": "INVALID"
+  },
+  {
+   "slot": "e",
+   "language": "TSPL",
+   "value": " 789123456789 ",
+   "result": "OK:789123456789"
+  },
+  {
+   "slot": "e",
+   "language": "TSPL",
+   "value": "7891234567895",
+   "result": "INVALID"
+  },
+  {
+   "slot": "e",
+   "language": "TSPL",
+   "value": "7891234567890",
+   "result": "INVALID"
+  },
+  {
+   "slot": "e",
+   "language": "TSPL",
+   "value": "789123456789",
+   "result": "OK:789123456789"
+  },
+  {
+   "slot": "e",
+   "language": "TSPL",
+   "value": " 7891234567895 ",
+   "result": "INVALID"
+  },
+  {
+   "slot": "e",
+   "language": "TSPL",
+   "value": "1234567",
+   "result": "OK:1234567"
+  },
+  {
+   "slot": "e",
+   "language": "TSPL",
+   "value": "12345670",
+   "result": "OK:12345670"
+  },
+  {
+   "slot": "e",
+   "language": "TSPL",
+   "value": "12345678",
+   "result": "OK:12345678"
+  },
+  {
+   "slot": "e",
+   "language": "TSPL",
+   "value": "03600029145",
+   "result": "OK:03600029145"
+  },
+  {
+   "slot": "e",
+   "language": "TSPL",
+   "value": "036000291452",
+   "result": "OK:036000291452"
+  },
+  {
+   "slot": "e",
+   "language": "TSPL",
+   "value": "036000291453",
+   "result": "OK:036000291453"
+  },
+  {
+   "slot": "e",
+   "language": "TSPL",
+   "value": "ÿ",
+   "result": "INVALID"
+  },
+  {
+   "slot": "e",
+   "language": "TSPL",
+   "value": "çççç",
+   "result": "INVALID"
+  },
+  {
+   "slot": "e",
+   "language": "TSPL",
+   "value": "ÇÃÇÃÇÃ",
+   "result": "INVALID"
+  },
+  {
+   "slot": "e",
+   "language": "TSPL",
+   "value": " ",
+   "result": "INVALID"
+  },
+  {
+   "slot": "e",
+   "language": "TSPL",
+   "value": "Ω",
+   "result": "INVALID"
+  },
+  {
+   "slot": "e",
+   "language": "TSPL",
+   "value": "ß",
+   "result": "INVALID"
+  },
+  {
+   "slot": "e",
+   "language": "TSPL",
+   "value": "١٢٣",
+   "result": "INVALID"
+  },
+  {
+   "slot": "f",
+   "language": "ZPL",
+   "value": "",
+   "result": "MISSING"
+  },
+  {
+   "slot": "f",
+   "language": "ZPL",
+   "value": "abc",
+   "result": "OK:abc"
+  },
+  {
+   "slot": "f",
+   "language": "ZPL",
+   "value": "ação",
+   "result": "OK:ação"
+  },
+  {
+   "slot": "f",
+   "language": "ZPL",
+   "value": "á",
+   "result": "OK:á"
+  },
+  {
+   "slot": "f",
+   "language": "ZPL",
+   "value": "́a",
+   "result": "OK:́a"
+  },
+  {
+   "slot": "f",
+   "language": "ZPL",
+   "value": "xxxxxxxxxx",
+   "result": "OK:xxxxxxxxxx"
+  },
+  {
+   "slot": "f",
+   "language": "ZPL",
+   "value": "xxxxxxxxxxx",
+   "result": "OK:xxxxxxxxxxx"
+  },
+  {
+   "slot": "f",
+   "language": "ZPL",
+   "value": "a^b~c_d\\e",
+   "result": "OK:a_5Eb_7Ec_5Fd_5Ce"
+  },
+  {
+   "slot": "f",
+   "language": "ZPL",
+   "value": "diz \"oi\"",
+   "result": "OK:diz \"oi\""
+  },
+  {
+   "slot": "f",
+   "language": "ZPL",
+   "value": "€‚ƒ„…†‡ˆ‰Š‹ŒŽ",
+   "result": "INVALID"
+  },
+  {
+   "slot": "f",
+   "language": "ZPL",
+   "value": "seta →",
+   "result": "OK:seta →"
+  },
+  {
+   "slot": "f",
+   "language": "ZPL",
+   "value": "tab\tx",
+   "result": "INVALID"
+  },
+  {
+   "slot": "f",
+   "language": "ZPL",
+   "value": "del",
+   "result": "INVALID"
+  },
+  {
+   "slot": "f",
+   "language": "ZPL",
+   "value": "c1",
+   "result": "OK:c1"
+  },
+  {
+   "slot": "f",
+   "language": "ZPL",
+   "value": "😀😀",
+   "result": "OK:😀😀"
+  },
+  {
+   "slot": "f",
+   "language": "ZPL",
+   "value": "a\ud800b",
+   "result": "INVALID"
+  },
+  {
+   "slot": "f",
+   "language": "ZPL",
+   "value": " 789123456789 ",
+   "result": "INVALID"
+  },
+  {
+   "slot": "f",
+   "language": "ZPL",
+   "value": "7891234567895",
+   "result": "INVALID"
+  },
+  {
+   "slot": "f",
+   "language": "ZPL",
+   "value": "7891234567890",
+   "result": "INVALID"
+  },
+  {
+   "slot": "f",
+   "language": "ZPL",
+   "value": "789123456789",
+   "result": "OK:789123456789"
+  },
+  {
+   "slot": "f",
+   "language": "ZPL",
+   "value": " 7891234567895 ",
+   "result": "INVALID"
+  },
+  {
+   "slot": "f",
+   "language": "ZPL",
+   "value": "1234567",
+   "result": "OK:1234567"
+  },
+  {
+   "slot": "f",
+   "language": "ZPL",
+   "value": "12345670",
+   "result": "OK:12345670"
+  },
+  {
+   "slot": "f",
+   "language": "ZPL",
+   "value": "12345678",
+   "result": "OK:12345678"
+  },
+  {
+   "slot": "f",
+   "language": "ZPL",
+   "value": "03600029145",
+   "result": "OK:03600029145"
+  },
+  {
+   "slot": "f",
+   "language": "ZPL",
+   "value": "036000291452",
+   "result": "OK:036000291452"
+  },
+  {
+   "slot": "f",
+   "language": "ZPL",
+   "value": "036000291453",
+   "result": "OK:036000291453"
+  },
+  {
+   "slot": "f",
+   "language": "ZPL",
+   "value": "ÿ",
+   "result": "OK:ÿ"
+  },
+  {
+   "slot": "f",
+   "language": "ZPL",
+   "value": "çççç",
+   "result": "OK:çççç"
+  },
+  {
+   "slot": "f",
+   "language": "ZPL",
+   "value": "ÇÃÇÃÇÃ",
+   "result": "OK:ÇÃÇÃÇÃ"
+  },
+  {
+   "slot": "f",
+   "language": "ZPL",
+   "value": " ",
+   "result": "OK: "
+  },
+  {
+   "slot": "f",
+   "language": "ZPL",
+   "value": "Ω",
+   "result": "OK:Ω"
+  },
+  {
+   "slot": "f",
+   "language": "ZPL",
+   "value": "ß",
+   "result": "OK:ß"
+  },
+  {
+   "slot": "f",
+   "language": "ZPL",
+   "value": "١٢٣",
+   "result": "OK:١٢٣"
+  },
+  {
+   "slot": "f",
+   "language": "TSPL",
+   "value": "",
+   "result": "MISSING"
+  },
+  {
+   "slot": "f",
+   "language": "TSPL",
+   "value": "abc",
+   "result": "OK:abc"
+  },
+  {
+   "slot": "f",
+   "language": "TSPL",
+   "value": "ação",
+   "result": "OK:ação"
+  },
+  {
+   "slot": "f",
+   "language": "TSPL",
+   "value": "á",
+   "result": "OK:á"
+  },
+  {
+   "slot": "f",
+   "language": "TSPL",
+   "value": "́a",
+   "result": "INVALID"
+  },
+  {
+   "slot": "f",
+   "language": "TSPL",
+   "value": "xxxxxxxxxx",
+   "result": "OK:xxxxxxxxxx"
+  },
+  {
+   "slot": "f",
+   "language": "TSPL",
+   "value": "xxxxxxxxxxx",
+   "result": "OK:xxxxxxxxxxx"
+  },
+  {
+   "slot": "f",
+   "language": "TSPL",
+   "value": "a^b~c_d\\e",
+   "result": "OK:a^b~c_d\\e"
+  },
+  {
+   "slot": "f",
+   "language": "TSPL",
+   "value": "diz \"oi\"",
+   "result": "OK:diz \\[\"]oi\\[\"]"
+  },
+  {
+   "slot": "f",
+   "language": "TSPL",
+   "value": "€‚ƒ„…†‡ˆ‰Š‹ŒŽ",
+   "result": "INVALID"
+  },
+  {
+   "slot": "f",
+   "language": "TSPL",
+   "value": "seta →",
+   "result": "INVALID"
+  },
+  {
+   "slot": "f",
+   "language": "TSPL",
+   "value": "tab\tx",
+   "result": "INVALID"
+  },
+  {
+   "slot": "f",
+   "language": "TSPL",
+   "value": "del",
+   "result": "INVALID"
+  },
+  {
+   "slot": "f",
+   "language": "TSPL",
+   "value": "c1",
+   "result": "INVALID"
+  },
+  {
+   "slot": "f",
+   "language": "TSPL",
+   "value": "😀😀",
+   "result": "INVALID"
+  },
+  {
+   "slot": "f",
+   "language": "TSPL",
+   "value": "a\ud800b",
+   "result": "INVALID"
+  },
+  {
+   "slot": "f",
+   "language": "TSPL",
+   "value": " 789123456789 ",
+   "result": "INVALID"
+  },
+  {
+   "slot": "f",
+   "language": "TSPL",
+   "value": "7891234567895",
+   "result": "INVALID"
+  },
+  {
+   "slot": "f",
+   "language": "TSPL",
+   "value": "7891234567890",
+   "result": "INVALID"
+  },
+  {
+   "slot": "f",
+   "language": "TSPL",
+   "value": "789123456789",
+   "result": "OK:789123456789"
+  },
+  {
+   "slot": "f",
+   "language": "TSPL",
+   "value": " 7891234567895 ",
+   "result": "INVALID"
+  },
+  {
+   "slot": "f",
+   "language": "TSPL",
+   "value": "1234567",
+   "result": "OK:1234567"
+  },
+  {
+   "slot": "f",
+   "language": "TSPL",
+   "value": "12345670",
+   "result": "OK:12345670"
+  },
+  {
+   "slot": "f",
+   "language": "TSPL",
+   "value": "12345678",
+   "result": "OK:12345678"
+  },
+  {
+   "slot": "f",
+   "language": "TSPL",
+   "value": "03600029145",
+   "result": "OK:03600029145"
+  },
+  {
+   "slot": "f",
+   "language": "TSPL",
+   "value": "036000291452",
+   "result": "OK:036000291452"
+  },
+  {
+   "slot": "f",
+   "language": "TSPL",
+   "value": "036000291453",
+   "result": "OK:036000291453"
+  },
+  {
+   "slot": "f",
+   "language": "TSPL",
+   "value": "ÿ",
+   "result": "OK:ÿ"
+  },
+  {
+   "slot": "f",
+   "language": "TSPL",
+   "value": "çççç",
+   "result": "OK:çççç"
+  },
+  {
+   "slot": "f",
+   "language": "TSPL",
+   "value": "ÇÃÇÃÇÃ",
+   "result": "OK:ÇÃÇÃÇÃ"
+  },
+  {
+   "slot": "f",
+   "language": "TSPL",
+   "value": " ",
+   "result": "OK: "
+  },
+  {
+   "slot": "f",
+   "language": "TSPL",
+   "value": "Ω",
+   "result": "INVALID"
+  },
+  {
+   "slot": "f",
+   "language": "TSPL",
+   "value": "ß",
+   "result": "OK:ß"
+  },
+  {
+   "slot": "f",
+   "language": "TSPL",
+   "value": "١٢٣",
+   "result": "INVALID"
+  }
+ ]
+}
