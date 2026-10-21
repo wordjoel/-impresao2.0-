@@ -4,6 +4,7 @@ import br.com.atos.printbridge.api.DocumentType
 import br.com.atos.printbridge.api.JobStatus
 import br.com.atos.printbridge.api.PrintJobRequest
 import br.com.atos.printbridge.api.PrinterProfile
+import br.com.atos.printbridge.application.coletor.DesignerTemplateSource
 import br.com.atos.printbridge.application.usecase.EnqueuePrintJobUseCase
 import br.com.atos.printbridge.application.usecase.SavePrinterUseCase
 import br.com.atos.printbridge.domain.error.DocumentRasterizationException
@@ -35,6 +36,8 @@ import br.com.atos.printbridge.domain.repository.PrintJobRepository
 import br.com.atos.printbridge.domain.repository.PrinterRepository
 import br.com.atos.printbridge.domain.template.BuiltInPrintTemplates
 import br.com.atos.printbridge.domain.template.PlaceholderTemplateRenderer
+import br.com.atos.printbridge.util.LogLevel
+import br.com.atos.printbridge.util.Logger
 import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 
@@ -59,6 +62,8 @@ class SubmitPrintRequestUseCase @Inject constructor(
     private val printerRepository: PrinterRepository,
     private val enqueue: EnqueuePrintJobUseCase,
     private val rasterizer: DocumentRasterizer,
+    // Passo 6: templates publicados pelo designer do PC. None nos testes que não tratam disso.
+    private val designerTemplates: DesignerTemplateSource = DesignerTemplateSource.None,
 ) {
     suspend operator fun invoke(request: PrintJobRequest, sourceApp: String? = null): SubmittedPrint {
         val printer = resolvePrinter(request.printerProfileId)
@@ -72,7 +77,9 @@ class SubmitPrintRequestUseCase @Inject constructor(
         val jobs: List<PrintJob> = when (request.documentType) {
             DocumentType.TEMPLATE -> {
                 val templateId = requireArgument(request.templateId, "templateId é obrigatório para TEMPLATE")
-                val template = BuiltInPrintTemplates.byId(templateId) ?: throw UnknownTemplateException(templateId)
+                val template = BuiltInPrintTemplates.byId(templateId)
+                    ?: return submitDesignerTemplate(templateId, request, printer, name, sourceApp)
+                        ?: throw UnknownTemplateException(templateId)
                 if (printer.language != PrinterLanguage.AUTO && printer.language != template.language) {
                     throw TemplateLanguageMismatchException(templateId, template.language.name, printer.language.name)
                 }
@@ -179,6 +186,44 @@ class SubmitPrintRequestUseCase @Inject constructor(
         return listOf(
             enqueue(printer.id, PrintPayloadType.PWG_RASTER, String(encoded, Charsets.ISO_8859_1), docName, request.copies, request.externalDocumentId, sourceApp = sourceApp),
         )
+    }
+
+    /**
+     * Template do designer do PC (passo 6). As cópias vão DENTRO do comando (^PQ / PRINT 1,n),
+     * como na impressão pelo PC: o job leva uma etiqueta só, com os mesmos bytes conferidos pelos
+     * vetores do pacote. Null = não é template do designer.
+     */
+    private suspend fun submitDesignerTemplate(
+        templateId: String,
+        request: PrintJobRequest,
+        printer: Printer,
+        name: String?,
+        sourceApp: String?,
+    ): SubmittedPrint? {
+        val label = designerTemplates.render(templateId, request.variables.orEmpty(), printer, request.copies) ?: return null
+        val job = enqueue(
+            printerId = printer.id,
+            type = label.type,
+            payload = label.payload,
+            documentName = name ?: label.documentName,
+            copies = 1,
+            externalDocumentId = request.externalDocumentId,
+            sourceApp = sourceApp,
+        )
+        Logger.event(
+            LogLevel.INFO,
+            "designer_template_enqueued",
+            jobId = job.id,
+            printerId = printer.id,
+            extra = mapOf(
+                "templateId" to templateId,
+                "version" to label.templateVersion,
+                "target" to label.target,
+                "versionCheck" to label.versionCheck.name,
+                "labelSha256" to label.labelSha256,
+            ),
+        )
+        return SubmittedPrint(id = job.id, jobIds = listOf(job.id), printerId = printer.id)
     }
 
     private suspend fun resolvePrinter(printerId: String?): Printer =

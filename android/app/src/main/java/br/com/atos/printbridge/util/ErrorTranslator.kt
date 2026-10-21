@@ -21,6 +21,7 @@ import br.com.atos.printbridge.domain.error.PrintBridgeException
 import br.com.atos.printbridge.domain.error.PrintJobNotFoundException
 import br.com.atos.printbridge.domain.error.PrinterNotFoundException
 import br.com.atos.printbridge.domain.error.TemplateLanguageMismatchException
+import br.com.atos.printbridge.domain.error.TemplateVersionUnconfirmedException
 import br.com.atos.printbridge.domain.error.UnknownTemplateException
 
 /**
@@ -84,6 +85,8 @@ object ErrorTranslator {
             "Faltam dados para imprimir a etiqueta: ${error.missing.joinToString()}. Nada foi impresso."
         is InvalidTemplateValueException ->
             "O campo ${error.variable} tem um caractere que a impressora não aceita. Nada foi impresso."
+        // A mensagem do domínio já é a do operador (contrato do passo 6: "Sem conexão com o PC...").
+        is TemplateVersionUnconfirmedException -> error.message ?: "Não deu para confirmar a versão da etiqueta. Nada foi impresso."
         is TemplateLanguageMismatchException ->
             "Esta etiqueta é ${error.templateLanguage}, mas a impressora está como ${error.printerLanguage}. Ajuste a linguagem em Impressoras."
         is DocumentRasterizationException ->

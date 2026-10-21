@@ -701,8 +701,10 @@ components:
     DeviceProvisioning:
       type: object
       description: >
-        Tudo que o app precisa para falar com o PC. Entregue uma vez, pelo MDM
-        (ProvisioningConfig) ou pela tela de administração com PIN.
+        Tudo que o app precisa para falar com o PC. Entregue uma vez, pelo MDM (este JSON inteiro
+        na chave gerenciada coletor_provisioning, app_restrictions.xml) ou pela tela de
+        administração com PIN. O app só aceita serverUrl http:// num IPv4 privado da loja (10/8,
+        172.16/12, 192.168/16) e guarda o token cifrado no Android Keystore.
       required: [deviceId, token, serverUrl, signingKey]
       properties:
         deviceId: { type: string }

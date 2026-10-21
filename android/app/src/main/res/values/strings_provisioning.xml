@@ -21,4 +21,6 @@
     <string name="mc_retry_base_ms">Espera base entre tentativas (ms)</string>
     <string name="mc_history_days">Dias de histórico</string>
     <string name="mc_admin_pin">PIN do administrador (4 a 8 dígitos)</string>
+    <string name="mc_coletor_provisioning">Ligação com o PC das etiquetas (designer)</string>
+    <string name="mc_coletor_provisioning_desc">JSON devolvido pelo print-server ao cadastrar este coletor. Só endereço http:// de IP privado da loja é aceito.</string>
 </resources>

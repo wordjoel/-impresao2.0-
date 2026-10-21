@@ -3,8 +3,16 @@ package br.com.atos.printbridge.domain.error
 // Erros da Fase 1 (template {{var}}, rasterização de documento, perfil de mídia). Ficam neste
 // pacote porque PrintBridgeException é sealed — e assim o ErrorTranslator continua exaustivo.
 
-class UnknownTemplateException(val templateId: String) :
-    PrintBridgeException("Template '$templateId' não existe")
+class UnknownTemplateException(val templateId: String, detail: String? = null) :
+    PrintBridgeException(detail ?: "Template '$templateId' não existe")
+
+/**
+ * Template do designer (passo 6) cuja versão não deu para confirmar com o PC das etiquetas: sem
+ * resposta fora da janela offline de 15 min, coletor revogado, ou pacote novo que não validou.
+ * Nada é impresso — nunca uma versão antiga sem avisar.
+ */
+class TemplateVersionUnconfirmedException(val templateId: String, detail: String) :
+    PrintBridgeException(detail)
 
 /** Faltou variável exigida pelo template — nunca imprimimos com o campo em branco silenciosamente. */
 class MissingTemplateVariablesException(val templateId: String, val missing: List<String>) :

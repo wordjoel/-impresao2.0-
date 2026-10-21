@@ -183,7 +183,7 @@ autenticação. Decisões tiradas do código:
 | | Decisão |
 |---|---|
 | P1 | **Janela offline de 15 min.** Sem resposta do PC, imprime com o pacote guardado se a última conferência bem-sucedida tiver menos de 15 min (relógio monotônico; reinício do aparelho zera a janela). O relatório marca `versionCheck=OFFLINE_GRACE`. Depois disso: `TEMPLATE_VERSION_UNCONFIRMED` |
-| P2 | **HTTP na LAN da loja no v1**, com pacote assinado ES256 e token por aparelho. TLS fica para v2. Cleartext liberado só para o IP do PC no `network_security_config` |
+| P2 | **HTTP na LAN da loja no v1**, com pacote assinado ES256 e token por aparelho. TLS fica para v2. ~~Cleartext liberado só para o IP do PC no `network_security_config`~~ — premissa corrigida na 6c-2a: esse arquivo é fixo na compilação e o IP do PC muda por loja. O app usa o mesmo cliente HTTP por socket do IPP (fora do alcance do `network_security_config`, que continua proibindo cleartext para a nuvem, intocado) e **só aceita `http://` em IPv4 privado** (10/8, 172.16/12, 192.168/16) |
 | P3 | **TSPL** é o alvo padrão publicado para o MB241 |
 | P4 | **Sem `SEQ` no coletor no v1** (publicar recusa com `SEQUENCE`) |
 | P5 | **API local continua `signature`** (só apps ATHOS). Terceiros seguem por Compartilhar e impressão do sistema. Lista de apps autorizados pelo MDM fica para depois |
@@ -266,11 +266,36 @@ Texto original das pendências, mantido para histórico:
   dependia de fixture externa). Designer: 207 passando.
 - Regerar a fixture sempre que mudar `coletor.ts`: `cd designer/apps/print-server && npx tsx scripts/gen-coletor-fixture.ts`.
 
-Próximo (6c-2): ligar no app — guardar o provisionamento (MDM / tela com PIN; cleartext só para o IP do PC no
-`network_security_config`), cliente HTTP do coletor (lista, pacote com ETag, versão com 3 s, relatório),
-armazenamento dos pacotes validados, `printJob(TEMPLATE)` procurando também os pacotes do designer (erros
-`UNKNOWN_TEMPLATE`/`MISSING_VARIABLES`/`INVALID_VARIABLE_VALUE`/`LANGUAGE_MISMATCH` + o novo
-`TEMPLATE_VERSION_UNCONFIRMED`) e fila de relatórios. Depois: botão "Publicar no coletor" no designer.
+**6c-2a. Impressão pela ponte — FEITO (2026-10-20, sem commit).** O caminho que imprime:
+- **Ligação pelo MDM**: chave nova `coletor_provisioning` (hidden) em `app_restrictions.xml`; cola-se o JSON
+  INTEIRO devolvido por `POST /api/coletor/devices`. `ColetorLink.parse` valida (deviceId, token, `serverUrl`
+  só `http://` + IPv4 privado + porta, chave EC P-256 em PEM, `kid`). `ManagedColetorLink` é chamado pelo
+  `ProvisioningCoordinator` junto do `license_token`; chave vazia não apaga a ligação (revogar é no PC).
+  A chave pública que assina os pacotes só chega por esse canal (MDM), nunca pela rede da loja.
+- **Armazenamento** (`data/coletor/AndroidColetorStore`): token cifrado com AES-256-GCM, chave gerada no
+  Android Keystore e não exportável (`KeystoreSecretBox`); demais campos em SharedPreferences privadas;
+  envelopes em `files/coletor/packages/<templateId>.json`, **revalidados a cada leitura** (arquivo mexido = baixa
+  de novo); trocar de PC/chave apaga os pacotes antigos. Última conferência: `sha|elapsedRealtime|BOOT_COUNT`.
+- **Rede** (`ColetorHttpRemote`): `MiniHttpClient.request` (novo; o `post` do IPP ficou intocado, recusa CR/LF em
+  cabeçalho). Conferência com 1,5 s de conexão + 1,5 s de leitura (o "3 s" do contrato); 200/404/401/outros →
+  Answered/NotPublished/Unauthorized/Unreachable.
+- **Ponte** (`application/coletor/ColetorTemplateResolver` + `SubmitPrintRequestUseCase`): `printJob(TEMPLATE)`
+  procura primeiro os embutidos (inalterados, nem consultam o PC) e depois os do designer. As cópias vão no
+  comando (`^PQ`/`PRINT 1,n`) e o job leva 1 etiqueta, com os bytes conferidos pelos vetores. Erros:
+  `UNKNOWN_TEMPLATE` (sem ligação, nunca baixado e PC fora, ou despublicado — este apaga o guardado),
+  `MISSING_VARIABLES` (todos de uma vez), `INVALID_VARIABLE_VALUE` (com o campo), `LANGUAGE_MISMATCH` (sem alvo
+  para linguagem/DPI da impressora) e o novo **`TEMPLATE_VERSION_UNCONFIRMED`** (fora da janela, coletor
+  revogado, versão nova que não baixou/validou, ou pacote trocado no meio). Nunca imprime a versão antiga.
+- `PrintBridgeContract.ERROR_TEMPLATE_VERSION_UNCONFIRMED` (printbridge-api) — única adição à API pública.
+- Testes (24 novos): `ColetorLinkTest` (4), `ColetorTemplateResolverTest` (13, sobre o pacote real da fixture),
+  `ColetorHttpRemoteTest` (4, servidor de socket de verdade, inclusive PC que não responde em 3 s),
+  `DesignerTemplateBridgeTest` (3, `printJob` → fila → bytes na impressora iguais ao PC). Suíte Android:
+  **412 passando**, 1 ignorado; `assembleGenericoDebug` OK.
+- **Não validado em aparelho**: Keystore (não existe em teste JVM), `BOOT_COUNT`, MDM real e rede da loja.
+
+Próximo (6c-2b): fila de relatórios de impressão (`POST /coletor/v1/print-reports`, best-effort, idempotente) com
+`versionCheck`; tela de administração com PIN para colar o provisionamento sem MDM; validação no CF550 real
+com o print-server na LAN. Depois: botão "Publicar no coletor" no designer.
 
 ## 5. Hifenização em português — FEITO (2026-10-19, sem commit)
 

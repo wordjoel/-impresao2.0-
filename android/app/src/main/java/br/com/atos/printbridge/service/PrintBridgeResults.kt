@@ -17,6 +17,7 @@ import br.com.atos.printbridge.domain.error.PrintBridgeException
 import br.com.atos.printbridge.domain.error.PrintJobNotFoundException
 import br.com.atos.printbridge.domain.error.PrinterNotFoundException
 import br.com.atos.printbridge.domain.error.TemplateLanguageMismatchException
+import br.com.atos.printbridge.domain.error.TemplateVersionUnconfirmedException
 import br.com.atos.printbridge.domain.error.UnknownTemplateException
 import br.com.atos.printbridge.domain.queue.PrintJobEvent
 import br.com.atos.printbridge.util.ErrorTranslator
@@ -57,6 +58,7 @@ object PrintBridgeResults {
         is MissingTemplateVariablesException -> C.ERROR_MISSING_VARIABLES
         is InvalidTemplateValueException -> C.ERROR_INVALID_VARIABLE_VALUE
         is TemplateLanguageMismatchException -> C.ERROR_LANGUAGE_MISMATCH
+        is TemplateVersionUnconfirmedException -> C.ERROR_TEMPLATE_VERSION_UNCONFIRMED
         is DocumentRasterizationException -> C.ERROR_DOCUMENT_UNREADABLE
         is PayloadTooLargeException -> C.ERROR_PAYLOAD_TOO_LARGE
         is NoDefaultPrinterException, is PrinterNotFoundException -> C.ERROR_NO_PRINTER

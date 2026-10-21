@@ -7,6 +7,7 @@ import android.content.IntentFilter
 import android.content.RestrictionsManager
 import androidx.core.content.ContextCompat
 import br.com.atos.printbridge.application.provisioning.ApplyProvisioningUseCase
+import br.com.atos.printbridge.data.coletor.ManagedColetorLink
 import br.com.atos.printbridge.domain.provisioning.ProvisioningConfig
 import br.com.atos.printbridge.license.ManagedLicenseLink
 import br.com.atos.printbridge.util.LogLevel
@@ -41,6 +42,8 @@ class ProvisioningCoordinator @Inject constructor(
     private val applyProvisioning: ApplyProvisioningUseCase,
     // D2: a mesma configuração gerenciada traz o License Token (license_token) do agente oficial.
     private val managedLicense: ManagedLicenseLink,
+    // Passo 6: e a ligação com o PC das etiquetas (coletor_provisioning).
+    private val managedColetor: ManagedColetorLink,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val mutex = Mutex()
@@ -67,7 +70,9 @@ class ProvisioningCoordinator @Inject constructor(
     suspend fun applyPending() = mutex.withLock {
         // Licença primeiro e sempre: um bundle só com license_token conta como "sem configuração
         // de loja" (ProvisioningConfig.isEmpty) e não pode deixar o token sem leitura.
-        managedLicense.syncFromRestrictions(readRestrictions())
+        val restrictions = readRestrictions()
+        managedLicense.syncFromRestrictions(restrictions)
+        managedColetor.syncFromRestrictions(restrictions)
         val managed = readManagedConfig()
         if (managed != null && !managed.isEmpty) {
             applyIfChanged(managed, SOURCE_MDM)

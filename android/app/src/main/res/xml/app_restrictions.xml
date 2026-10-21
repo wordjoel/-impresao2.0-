@@ -70,4 +70,17 @@
     <restriction android:key="history_retention_days" android:restrictionType="integer" android:title="@string/mc_history_days" android:defaultValue="30" />
     <!-- hidden exige defaultValue; vazio = não mexe no PIN atual. -->
     <restriction android:key="admin_pin" android:restrictionType="hidden" android:title="@string/mc_admin_pin" android:defaultValue="" />
+
+    <!--
+      Passo 6 (designer de etiquetas): ligação com o PC das etiquetas. Cole aqui, INTEIRO, o JSON que o
+      print-server devolve ao cadastrar o coletor (POST /api/coletor/devices). Leva um token só de
+      leitura de etiquetas, revogável no PC, e a chave pública que assina os pacotes. hidden = o console
+      não mostra o valor de volta. Vazio = não mexe na ligação atual.
+    -->
+    <restriction
+        android:key="coletor_provisioning"
+        android:restrictionType="hidden"
+        android:title="@string/mc_coletor_provisioning"
+        android:description="@string/mc_coletor_provisioning_desc"
+        android:defaultValue="" />
 </restrictions>

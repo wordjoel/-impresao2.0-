@@ -212,6 +212,12 @@ object PrintBridgeContract {
     const val ERROR_MISSING_VARIABLES = "MISSING_VARIABLES"
     const val ERROR_INVALID_VARIABLE_VALUE = "INVALID_VARIABLE_VALUE"
     const val ERROR_LANGUAGE_MISMATCH = "LANGUAGE_MISMATCH"
+
+    /**
+     * Template do designer do PC (passo 6) sem versão confirmada: o PC não respondeu e já passou a
+     * janela offline de 15 min, ou o coletor foi revogado. Nada foi impresso; tente de novo com rede.
+     */
+    const val ERROR_TEMPLATE_VERSION_UNCONFIRMED = "TEMPLATE_VERSION_UNCONFIRMED"
     const val ERROR_DOCUMENT_UNREADABLE = "DOCUMENT_UNREADABLE"
     const val ERROR_PAYLOAD_TOO_LARGE = "PAYLOAD_TOO_LARGE"
     const val ERROR_NO_PRINTER = "NO_PRINTER"

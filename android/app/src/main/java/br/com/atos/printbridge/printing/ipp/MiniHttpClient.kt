@@ -52,6 +52,45 @@ object MiniHttpClient {
         }
     }
 
+    /**
+     * Requisição genérica (passo 6: GET/POST do coletor ao PC das etiquetas). [post] fica como está
+     * para não mudar uma vírgula do que o IPP manda às impressoras. Valores de cabeçalho com CR/LF
+     * são recusados (sem injeção de cabeçalho).
+     */
+    fun request(
+        method: String,
+        host: String,
+        port: Int,
+        path: String,
+        headers: Map<String, String>,
+        body: ByteArray?,
+        connectTimeoutMillis: Int,
+        readTimeoutMillis: Int,
+        maxResponseBytes: Int,
+    ): HttpResponse {
+        require(method.isNotEmpty() && method.all { it in 'A'..'Z' }) { "método HTTP inválido" }
+        require(path.startsWith("/") && path.none { it.code <= 0x20 || it.code >= 0x7F }) { "caminho HTTP inválido" }
+        headers.forEach { (k, v) -> require(k.isNotEmpty() && k.none { it == '\r' || it == '\n' || it == ':' } && v.none { it == '\r' || it == '\n' }) { "cabeçalho HTTP inválido" } }
+        Socket().use { socket ->
+            socket.soTimeout = readTimeoutMillis
+            socket.connect(InetSocketAddress(host, port), connectTimeoutMillis)
+            val head = buildString {
+                append(method).append(' ').append(path).append(" HTTP/1.1\r\n")
+                append("Host: ").append(if (port == 80) host else "$host:$port").append("\r\n")
+                headers.forEach { (k, v) -> append(k).append(": ").append(v).append("\r\n") }
+                if (body != null) append("Content-Length: ").append(body.size).append("\r\n")
+                append("Connection: close\r\n")
+                append("User-Agent: AtosPrintBridge\r\n")
+                append("\r\n")
+            }
+            val out = socket.getOutputStream()
+            out.write(head.toByteArray(Charsets.UTF_8))
+            if (body != null) out.write(body)
+            out.flush()
+            return readResponse(BufferedInputStream(socket.getInputStream()), maxResponseBytes)
+        }
+    }
+
     /** Parte pura: lê status, cabeçalhos e corpo de um stream HTTP/1.x. Ignora respostas 100-continue. */
     fun readResponse(input: InputStream, maxResponseBytes: Int): HttpResponse {
         while (true) {
