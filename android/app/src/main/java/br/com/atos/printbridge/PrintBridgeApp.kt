@@ -3,6 +3,7 @@ package br.com.atos.printbridge
 import android.app.Application
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
+import br.com.atos.printbridge.data.coletor.ColetorReportCoordinator
 import br.com.atos.printbridge.license.ManagedLicenseLink
 import br.com.atos.printbridge.notification.PrintStatusNotifier
 import br.com.atos.printbridge.provisioning.ProvisioningCoordinator
@@ -28,6 +29,9 @@ class PrintBridgeApp : Application(), Configuration.Provider {
     @Inject
     lateinit var managedLicenseLink: ManagedLicenseLink
 
+    @Inject
+    lateinit var coletorReports: ColetorReportCoordinator
+
     override val workManagerConfiguration: Configuration
         get() = Configuration.Builder()
             .setWorkerFactory(workerFactory)
@@ -44,5 +48,7 @@ class PrintBridgeApp : Application(), Configuration.Provider {
         // D2: sem agente embutido. Publica o identificador de licença ao agente oficial
         // (com.onmdm.agent) e cancela o trabalho periódico herdado da versão com agente embutido.
         managedLicenseLink.start()
+        // Passo 6: relatórios de impressão dos templates do designer para o PC (best-effort).
+        coletorReports.start()
     }
 }

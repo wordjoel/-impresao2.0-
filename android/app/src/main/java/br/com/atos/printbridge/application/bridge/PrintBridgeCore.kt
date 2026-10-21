@@ -210,6 +210,7 @@ class SubmitPrintRequestUseCase @Inject constructor(
             externalDocumentId = request.externalDocumentId,
             sourceApp = sourceApp,
         )
+        designerTemplates.onEnqueued(job.id, templateId, label, printer)
         Logger.event(
             LogLevel.INFO,
             "designer_template_enqueued",

@@ -2,12 +2,14 @@ package br.com.atos.printbridge.di
 
 import br.com.atos.printbridge.application.coletor.ColetorLocalStore
 import br.com.atos.printbridge.application.coletor.ColetorRemote
+import br.com.atos.printbridge.application.coletor.ColetorReportStore
 import br.com.atos.printbridge.application.coletor.ColetorTemplateResolver
 import br.com.atos.printbridge.application.coletor.DesignerTemplateSource
 import br.com.atos.printbridge.application.coletor.DeviceClock
 import br.com.atos.printbridge.data.coletor.AndroidColetorStore
 import br.com.atos.printbridge.data.coletor.AndroidDeviceClock
 import br.com.atos.printbridge.data.coletor.ColetorHttpRemote
+import br.com.atos.printbridge.data.coletor.FileColetorReportStore
 import br.com.atos.printbridge.data.coletor.KeystoreSecretBox
 import br.com.atos.printbridge.data.coletor.SecretBox
 import dagger.Binds
@@ -24,4 +26,5 @@ abstract class ColetorModule {
     @Binds abstract fun remote(impl: ColetorHttpRemote): ColetorRemote
     @Binds abstract fun clock(impl: AndroidDeviceClock): DeviceClock
     @Binds abstract fun secrets(impl: KeystoreSecretBox): SecretBox
+    @Binds abstract fun reports(impl: FileColetorReportStore): ColetorReportStore
 }

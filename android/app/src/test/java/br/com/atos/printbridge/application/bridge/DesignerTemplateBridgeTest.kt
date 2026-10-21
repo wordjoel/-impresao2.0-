@@ -3,6 +3,9 @@ package br.com.atos.printbridge.application.bridge
 import br.com.atos.printbridge.api.DocumentType
 import br.com.atos.printbridge.api.PrintJobRequest
 import br.com.atos.printbridge.application.coletor.ColetorFixture
+import br.com.atos.printbridge.application.coletor.ColetorReportQueue
+import br.com.atos.printbridge.application.coletor.FakeColetorReportStore
+import br.com.atos.printbridge.domain.coletor.StrictJson
 import br.com.atos.printbridge.application.coletor.ColetorTemplateResolver
 import br.com.atos.printbridge.application.coletor.FakeColetorRemote
 import br.com.atos.printbridge.application.coletor.FakeColetorStore
@@ -67,6 +70,10 @@ class DesignerTemplateBridgeTest {
         val jobs = FakePrintJobRepository()
         val settings = FakeSettingsRepository(AppSettings(retryBaseIntervalMillis = 0))
         val remote = FakeColetorRemote()
+        val coletorStore = FakeColetorStore()
+        val reportStore = FakeColetorReportStore()
+        val events = PrintJobEventBus()
+        val reports = ColetorReportQueue(reportStore, coletorStore, remote, jobs)
         val enqueue = EnqueuePrintJobUseCase(
             jobs, printers, DuplicateSubmissionGuard(), FakeQueueDispatcher(),
             EvaluateLicenseStatusUseCase(
@@ -76,7 +83,7 @@ class DesignerTemplateBridgeTest {
             ),
             settings,
         )
-        val submit = SubmitPrintRequestUseCase(printers, enqueue, NoRaster, ColetorTemplateResolver(FakeColetorStore(), remote, FakeDeviceClock()))
+        val submit = SubmitPrintRequestUseCase(printers, enqueue, NoRaster, ColetorTemplateResolver(coletorStore, remote, FakeDeviceClock(), reports))
 
         init {
             runBlocking { printers.upsert(printer) }
@@ -89,7 +96,7 @@ class DesignerTemplateBridgeTest {
             printEngine = PrintEngine(transport),
             networkStateProvider = FakeNetworkStateProvider(available = true),
             mutexProvider = PrinterQueueMutexProvider(),
-            eventBus = PrintJobEventBus(),
+            eventBus = events,
         )
     }
 
@@ -110,6 +117,17 @@ class DesignerTemplateBridgeTest {
         val sent = transport.sentPayloads.single()
         assertEquals(expected, ColetorPackageVerifier.sha256Hex(sent))
         assertTrue(sent.toString(Charsets.ISO_8859_1).endsWith("PRINT 1,2\r\n"))
+
+        // Relatório para o PC: aberto no enfileiramento, fechado pelo estado do job, com o hash da etiqueta enviada.
+        assertEquals(1, f.reportStore.all().size)
+        f.reports.reconcile()
+        f.reports.flush()
+        val report = StrictJson.parse(f.remote.reports.single()) as Map<*, *>
+        assertEquals("SENT", report["status"])
+        assertEquals("CONFIRMED", report["versionCheck"])
+        assertEquals(ColetorFixture.sha, report["packageSha256"])
+        assertEquals(listOf(mapOf("bytesSha256" to expected)), report["labels"])
+        assertTrue(f.reportStore.all().isEmpty())
     }
 
     @Test

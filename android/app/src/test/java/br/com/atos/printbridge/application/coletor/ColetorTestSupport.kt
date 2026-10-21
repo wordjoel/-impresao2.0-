@@ -72,6 +72,20 @@ class FakeColetorRemote(
         envelopeCalls++
         return envelopeAnswer
     }
+
+    var reportAnswer: ColetorRemote.ReportResult = ColetorRemote.ReportResult.Accepted
+    val reports = mutableListOf<String>()
+    override fun report(link: ColetorLink, json: String): ColetorRemote.ReportResult {
+        reports += json
+        return reportAnswer
+    }
+}
+
+class FakeColetorReportStore : ColetorReportStore {
+    val items = linkedMapOf<String, br.com.atos.printbridge.domain.coletor.ColetorPrintReport>()
+    override fun all() = items.values.toList()
+    override fun save(report: br.com.atos.printbridge.domain.coletor.ColetorPrintReport) { items[report.reportId] = report }
+    override fun delete(reportId: String) { items.remove(reportId) }
 }
 
 class FakeColetorStore(var linkValue: ColetorLink? = ColetorFixture.link()) : ColetorLocalStore {

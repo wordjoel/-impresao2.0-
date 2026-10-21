@@ -20,7 +20,7 @@ import javax.inject.Inject
 class ColetorHttpRemote @Inject constructor() : ColetorRemote {
 
     override fun version(link: ColetorLink, templateId: String): VersionCheck {
-        val res = get(link, "/coletor/v1/labels/$templateId/version", VERSION_CONNECT_MS, VERSION_READ_MS, 16 * 1024)
+        val res = call(link, "/coletor/v1/labels/$templateId/version", VERSION_CONNECT_MS, VERSION_READ_MS, 16 * 1024)
             ?: return VersionCheck.Unreachable
         return when (res.status) {
             200 -> parseVersion(res.body) ?: VersionCheck.Unreachable
@@ -31,7 +31,7 @@ class ColetorHttpRemote @Inject constructor() : ColetorRemote {
     }
 
     override fun envelope(link: ColetorLink, templateId: String): ColetorRemote.Envelope {
-        val res = get(link, "/coletor/v1/labels/$templateId", PACKAGE_CONNECT_MS, PACKAGE_READ_MS, MAX_PACKAGE_BYTES)
+        val res = call(link, "/coletor/v1/labels/$templateId", PACKAGE_CONNECT_MS, PACKAGE_READ_MS, MAX_PACKAGE_BYTES)
             ?: return ColetorRemote.Envelope.Unreachable
         return when (res.status) {
             200 -> ColetorRemote.Envelope.Ok(res.body.toString(Charsets.UTF_8))
@@ -41,15 +41,38 @@ class ColetorHttpRemote @Inject constructor() : ColetorRemote {
         }
     }
 
-    private fun get(link: ColetorLink, path: String, connectMs: Int, readMs: Int, max: Int): MiniHttpClient.HttpResponse? =
+    override fun report(link: ColetorLink, json: String): ColetorRemote.ReportResult {
+        val res = call(link, "/coletor/v1/print-reports", PACKAGE_CONNECT_MS, PACKAGE_READ_MS, 16 * 1024, method = "POST", body = json.toByteArray(Charsets.UTF_8))
+            ?: return ColetorRemote.ReportResult.Unreachable
+        return when (res.status) {
+            200 -> ColetorRemote.ReportResult.Accepted
+            400 -> ColetorRemote.ReportResult.Rejected
+            401 -> ColetorRemote.ReportResult.Unauthorized
+            else -> ColetorRemote.ReportResult.Unreachable
+        }
+    }
+
+    private fun call(
+        link: ColetorLink,
+        path: String,
+        connectMs: Int,
+        readMs: Int,
+        max: Int,
+        method: String = "GET",
+        body: ByteArray? = null,
+    ): MiniHttpClient.HttpResponse? =
         try {
             MiniHttpClient.request(
-                method = "GET",
+                method = method,
                 host = link.host,
                 port = link.port,
                 path = path,
-                headers = mapOf("Authorization" to "Bearer ${link.token}", "Accept" to "application/json"),
-                body = null,
+                headers = buildMap {
+                    put("Authorization", "Bearer ${link.token}")
+                    put("Accept", "application/json")
+                    if (body != null) put("Content-Type", "application/json; charset=utf-8")
+                },
+                body = body,
                 connectTimeoutMillis = connectMs,
                 readTimeoutMillis = readMs,
                 maxResponseBytes = max,

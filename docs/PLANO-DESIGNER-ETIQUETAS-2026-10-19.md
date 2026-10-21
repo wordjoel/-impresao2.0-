@@ -293,9 +293,21 @@ Texto original das pendências, mantido para histórico:
   **412 passando**, 1 ignorado; `assembleGenericoDebug` OK.
 - **Não validado em aparelho**: Keystore (não existe em teste JVM), `BOOT_COUNT`, MDM real e rede da loja.
 
-Próximo (6c-2b): fila de relatórios de impressão (`POST /coletor/v1/print-reports`, best-effort, idempotente) com
-`versionCheck`; tela de administração com PIN para colar o provisionamento sem MDM; validação no CF550 real
-com o print-server na LAN. Depois: botão "Publicar no coletor" no designer.
+**6c-2b (parte 1). Relatórios de impressão — FEITO (2026-10-20, sem commit).**
+- `application/coletor/ColetorReportQueue`: relatório PENDENTE gravado quando o job do designer entra na fila
+  (`DesignerTemplateSource.onEnqueued`, best-effort: falha aqui não derruba a impressão); fechado como SENT/FAILED
+  pelo evento da fila ou, se o evento se perdeu (o barramento descarta sob pressão, o processo morre),
+  por `reconcile()` lendo o job no banco (cancelado/removido/purgado = nada foi à impressora, descarta).
+- `flush()` manda os prontos, em ordem: 200 apaga; 400 apaga com log (o PC nunca aceitaria); 401/rede/5xx guarda
+  para a próxima. Mesmo `reportId` no reenvio (o PC deduplica). Limite de 2000 guardados (os mais antigos saem).
+- `data/coletor/FileColetorReportStore` (um arquivo por relatório em `files/coletor/reports`) e
+  `ColetorReportCoordinator` (ouve a fila; reconcilia e reenvia ao abrir o app), iniciado no `PrintBridgeApp`.
+- JSON do relatório só com os campos do contrato; `labels[0].bytesSha256` = hash da etiqueta exata enviada.
+- Testes: `ColetorReportQueueTest` (5) e o teste de ponta a ponta da ponte agora confere o relatório. Suíte Android:
+  **417 passando**, 1 ignorado; `assembleGenericoDebug` OK.
+
+Próximo (6c-2b, parte 2): tela de administração com PIN para colar o provisionamento sem MDM (campo de teste)
+e validação no CF550 real com o print-server na LAN. Depois: botão "Publicar no coletor" no designer.
 
 ## 5. Hifenização em português — FEITO (2026-10-19, sem commit)
 

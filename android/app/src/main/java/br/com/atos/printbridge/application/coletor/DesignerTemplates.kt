@@ -46,6 +46,9 @@ data class DesignerLabel(
 interface DesignerTemplateSource {
     suspend fun render(templateId: String, variables: Map<String, String>, printer: Printer, copies: Int): DesignerLabel?
 
+    /** O job da etiqueta entrou na fila (abre o relatório de impressão para o PC). */
+    suspend fun onEnqueued(jobId: String, templateId: String, label: DesignerLabel, printer: Printer) {}
+
     object None : DesignerTemplateSource {
         override suspend fun render(templateId: String, variables: Map<String, String>, printer: Printer, copies: Int): DesignerLabel? = null
     }
@@ -63,6 +66,17 @@ interface ColetorRemote {
     }
 
     fun envelope(link: ColetorLink, templateId: String): Envelope
+
+    enum class ReportResult {
+        /** 200: registrado agora ou já antes (mesmo reportId). */
+        Accepted,
+        /** 400: o PC nunca vai aceitar este relatório. */
+        Rejected,
+        Unauthorized,
+        Unreachable,
+    }
+
+    fun report(link: ColetorLink, json: String): ReportResult
 }
 
 /** O que fica guardado no aparelho. Implementação: data/coletor/AndroidColetorStore. */
@@ -92,7 +106,16 @@ class ColetorTemplateResolver @Inject constructor(
     private val store: ColetorLocalStore,
     private val remote: ColetorRemote,
     private val clock: DeviceClock,
+    // Relatórios para o PC (6c-2b). Null nos testes que não tratam disso.
+    private val reports: ColetorReportQueue? = null,
 ) : DesignerTemplateSource {
+
+    override suspend fun onEnqueued(jobId: String, templateId: String, label: DesignerLabel, printer: Printer) {
+        // Best-effort: falha ao registrar o relatório nunca derruba a impressão já enfileirada.
+        runCatching { reports?.record(jobId, templateId, label, printer) }.onFailure {
+            Logger.event(LogLevel.WARN, "coletor_report_record_failed", jobId = jobId, extra = mapOf("error" to (it.message ?: it::class.simpleName)))
+        }
+    }
 
     /** Uma impressão de designer por vez: conferência + atualização não podem se cruzar. */
     private val mutex = Mutex()
