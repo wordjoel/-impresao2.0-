@@ -6,6 +6,9 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
 import br.com.atos.printbridge.data.local.entity.PrintJobEntity
+import br.com.atos.printbridge.domain.status.JobFailureRow
+import br.com.atos.printbridge.domain.status.PrinterActivityRow
+import br.com.atos.printbridge.domain.status.QueueSummaryRow
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -79,4 +82,28 @@ interface PrintJobDao {
 
     @Query("SELECT DISTINCT printerId FROM print_jobs WHERE status = 'PENDING'")
     suspend fun printerIdsWithPendingJobs(): List<String>
+
+    // ---- Estado para o MDM (item 2): só contagens e horários, nunca payload nem operador. ----
+
+    @Query(
+        "SELECT COALESCE(SUM(status = 'PENDING'), 0) AS pending, COALESCE(SUM(status = 'PROCESSING'), 0) AS processing, " +
+            "MIN(CASE WHEN status = 'PENDING' THEN createdAt END) AS oldestPendingAt, " +
+            "COALESCE(SUM(status = 'FAILED' AND updatedAt >= :since), 0) AS failedSince, " +
+            "COALESCE(SUM(status = 'SENT' AND COALESCE(sentAt, updatedAt) >= :since), 0) AS sentSince FROM print_jobs"
+    )
+    suspend fun queueSummary(since: Long): QueueSummaryRow
+
+    @Query(
+        "SELECT printerId, COALESCE(SUM(status IN ('PENDING', 'PROCESSING')), 0) AS activeJobs, " +
+            "MAX(CASE WHEN status = 'SENT' THEN COALESCE(sentAt, updatedAt) END) AS lastSentAt, " +
+            "MAX(CASE WHEN status = 'FAILED' THEN updatedAt END) AS lastFailedAt FROM print_jobs GROUP BY printerId"
+    )
+    suspend fun printerActivity(): List<PrinterActivityRow>
+
+    @Query("SELECT printerId, errorMessage, updatedAt FROM print_jobs WHERE status = 'FAILED' AND updatedAt >= :since ORDER BY updatedAt DESC LIMIT 200")
+    suspend fun recentFailures(since: Long): List<JobFailureRow>
+
+    /** Emite a cada mudança em print_jobs (o Room reavalia a consulta quando a tabela muda). */
+    @Query("SELECT MAX(updatedAt) FROM print_jobs")
+    fun observeLastChange(): Flow<Long?>
 }

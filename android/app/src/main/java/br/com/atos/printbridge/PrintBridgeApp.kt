@@ -48,6 +48,8 @@ class PrintBridgeApp : Application(), Configuration.Provider {
         // D2: sem agente embutido. Publica o identificador de licença ao agente oficial
         // (com.onmdm.agent) e cancela o trabalho periódico herdado da versão com agente embutido.
         managedLicenseLink.start()
+        // Item 2 (estado da fila para o MDM): o ProvisioningCoordinator liga o ManagedStatusReporter
+        // quando houver configuração gerenciada — sem MDM no aparelho, não há a quem informar.
         // Passo 6: relatórios de impressão dos templates do designer para o PC (best-effort).
         coletorReports.start()
     }

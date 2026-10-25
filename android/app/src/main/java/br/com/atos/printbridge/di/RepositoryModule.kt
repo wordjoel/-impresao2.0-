@@ -6,6 +6,7 @@ import br.com.atos.printbridge.data.repository.DeviceRepositoryImpl
 import br.com.atos.printbridge.data.repository.LabelTemplateRepositoryImpl
 import br.com.atos.printbridge.data.repository.PrinterRepositoryImpl
 import br.com.atos.printbridge.data.repository.PrintJobRepositoryImpl
+import br.com.atos.printbridge.data.repository.PrintStatusSourceImpl
 import br.com.atos.printbridge.data.repository.StoreRepositoryImpl
 import br.com.atos.printbridge.domain.repository.BrandRepository
 import br.com.atos.printbridge.domain.repository.DeviceRepository
@@ -14,6 +15,7 @@ import br.com.atos.printbridge.domain.repository.PrinterRepository
 import br.com.atos.printbridge.domain.repository.PrintJobRepository
 import br.com.atos.printbridge.domain.repository.SettingsRepository
 import br.com.atos.printbridge.domain.repository.StoreRepository
+import br.com.atos.printbridge.domain.status.PrintStatusSource
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -51,4 +53,8 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindBrandRepository(impl: BrandRepositoryImpl): BrandRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindPrintStatusSource(impl: PrintStatusSourceImpl): PrintStatusSource
 }

@@ -10,6 +10,7 @@ import br.com.atos.printbridge.application.provisioning.ApplyProvisioningUseCase
 import br.com.atos.printbridge.data.coletor.ManagedColetorLink
 import br.com.atos.printbridge.domain.provisioning.ProvisioningConfig
 import br.com.atos.printbridge.license.ManagedLicenseLink
+import br.com.atos.printbridge.license.ManagedStatusReporter
 import br.com.atos.printbridge.util.LogLevel
 import br.com.atos.printbridge.util.Logger
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -44,6 +45,8 @@ class ProvisioningCoordinator @Inject constructor(
     private val managedLicense: ManagedLicenseLink,
     // Passo 6: e a ligação com o PC das etiquetas (coletor_provisioning).
     private val managedColetor: ManagedColetorLink,
+    // Item 2: com MDM presente (há configuração gerenciada), o estado da impressão vai para ele.
+    private val statusReporter: ManagedStatusReporter,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val mutex = Mutex()
@@ -73,6 +76,7 @@ class ProvisioningCoordinator @Inject constructor(
         val restrictions = readRestrictions()
         managedLicense.syncFromRestrictions(restrictions)
         managedColetor.syncFromRestrictions(restrictions)
+        if (restrictions != null && !restrictions.isEmpty) statusReporter.start()
         val managed = readManagedConfig()
         if (managed != null && !managed.isEmpty) {
             applyIfChanged(managed, SOURCE_MDM)
